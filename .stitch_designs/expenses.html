@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>NkapSave - Expense Tracking</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#835400",
+                    "on-tertiary-container": "#402700",
+                    "surface-variant": "#d3e4fe",
+                    "outline-variant": "#bccabf",
+                    "secondary": "#5d5e61",
+                    "on-surface-variant": "#3d4a41",
+                    "error-container": "#ffdad6",
+                    "surface": "#f8f9ff",
+                    "on-secondary-fixed-variant": "#454749",
+                    "surface-tint": "#006c45",
+                    "outline": "#6d7a71",
+                    "secondary-container": "#e2e2e5",
+                    "on-primary-container": "#00341e",
+                    "on-background": "#0b1c30",
+                    "surface-container-low": "#eff4ff",
+                    "inverse-primary": "#66dca0",
+                    "inverse-on-surface": "#eaf1ff",
+                    "tertiary-container": "#ca8400",
+                    "surface-container-highest": "#d3e4fe",
+                    "primary-fixed": "#83f9bb",
+                    "on-tertiary-fixed-variant": "#643f00",
+                    "background": "#f8f9ff",
+                    "on-surface": "#0b1c30",
+                    "on-secondary-container": "#636467",
+                    "surface-dim": "#cbdbf5",
+                    "secondary-fixed-dim": "#c6c6c9",
+                    "secondary-fixed": "#e2e2e5",
+                    "on-tertiary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "primary": "#006c45",
+                    "on-tertiary-fixed": "#2a1800",
+                    "tertiary-fixed-dim": "#ffb957",
+                    "on-primary-fixed-variant": "#005233",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed": "#1a1c1e",
+                    "tertiary-fixed": "#ffddb5",
+                    "surface-container-high": "#dce9ff",
+                    "on-primary-fixed": "#002112",
+                    "inverse-surface": "#213145",
+                    "surface-bright": "#f8f9ff",
+                    "error": "#ba1a1a",
+                    "surface-container": "#e5eeff",
+                    "primary-container": "#27a770",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#66dca0",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "margin-mobile": "16px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "margin-desktop": "32px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "md": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["Hanken Grotesk"],
+                    "label-sm": ["Hanken Grotesk"],
+                    "label-lg": ["Hanken Grotesk"],
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"],
+                    "display-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["22px", {"lineHeight": "28px", "fontWeight": "700"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Hanken Grotesk', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-50 bg-surface dark:bg-background shadow-sm flex items-center justify-between px-margin-mobile py-sm">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary cursor-pointer active:opacity-80">menu</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary-fixed">NkapSave</h1>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container cursor-pointer active:opacity-80">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional close-up portrait of a young Cameroonian male entrepreneur in a modern office setting. He is wearing a crisp white shirt and has a warm, confident expression. The lighting is bright and natural, reflecting a clean high-end fintech aesthetic with a soft-focus background of a contemporary workspace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBekPgxrOnRdnRoXssjb0L79atfGGpDUsq82dJQhn4RyYkLXiXkKswaUVJC6nHuA73TXOBqIc4bUbdrfo81yrfenYFDUlFFwV-T5WJiJhno-AGor_B_BaFcrgYRCbQPJt24BebF7s8oBT2eQwY5FMvO4bQE_GLG1Y2de_rwuPk4GbBxHPkeToxDAfjLBi5cxcVaASGtMRL3lmS0h2fqUpdHIFOcI2aZxB5o0bCb6flgzN76S4lvErDo1bD4OC986AK_JjELzc7-oA"/>
+</div>
+</header>
+<main class="max-w-[800px] mx-auto px-margin-mobile space-y-lg pt-md">
+<!-- Top Section: Monthly Overview -->
+<section>
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(0,0,0,0.04)] border border-surface-container">
+<div class="flex justify-between items-start mb-md">
+<div>
+<p class="font-label-lg text-on-surface-variant mb-xs">Monthly Overview</p>
+<h2 class="font-display-lg text-display-lg text-on-background">185,000 <span class="text-headline-md">XAF</span></h2>
+</div>
+<div class="bg-primary-container/10 px-sm py-xs rounded-lg">
+<span class="font-label-sm text-primary font-bold">JULY 2024</span>
+</div>
+</div>
+<div class="space-y-sm">
+<div class="flex justify-between font-label-sm text-on-surface-variant">
+<span>Spent: 185,000 XAF</span>
+<span>Limit: 250,000 XAF</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-1000 ease-out" style="width: 74%;"></div>
+</div>
+<div class="flex justify-between items-center pt-xs">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-[18px]">account_balance_wallet</span>
+<p class="font-body-md text-on-surface">Remaining: <span class="font-bold">65,000 XAF</span></p>
+</div>
+<span class="font-label-sm text-on-surface-variant">74% Used</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Middle Section: Spending by Category -->
+<section>
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-md text-headline-md">Spending by Category</h3>
+<button class="text-primary font-label-lg hover:underline cursor-pointer">View All</button>
+</div>
+<!-- Horizontal scroll on mobile, vertical list implied by rhythm -->
+<div class="grid grid-cols-1 gap-md">
+<!-- Food -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+<span class="material-symbols-outlined">restaurant</span>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between font-label-lg">
+<span>Food &amp; Dining</span>
+<span>45,000 XAF</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full">
+<div class="h-full bg-orange-400 rounded-full" style="width: 40%;"></div>
+</div>
+</div>
+</div>
+<!-- Transport -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between font-label-lg">
+<span>Transport</span>
+<span>25,000 XAF</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full">
+<div class="h-full bg-blue-400 rounded-full" style="width: 25%;"></div>
+</div>
+</div>
+</div>
+<!-- Rent -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+<span class="material-symbols-outlined">home_work</span>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between font-label-lg">
+<span>Rent &amp; Utilities</span>
+<span>85,000 XAF</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full">
+<div class="h-full bg-purple-400 rounded-full" style="width: 80%;"></div>
+</div>
+</div>
+</div>
+<!-- Data/Airtime -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+<span class="material-symbols-outlined">signal_cellular_alt</span>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between font-label-lg">
+<span>Data &amp; Airtime</span>
+<span>30,000 XAF</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full">
+<div class="h-full bg-yellow-400 rounded-full" style="width: 55%;"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Section: Transaction History -->
+<section>
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-md text-headline-md">Recent Transactions</h3>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">tune</span>
+</div>
+<div class="space-y-sm">
+<!-- MTN MoMo Transaction -->
+<div class="bg-surface-container-lowest p-md rounded-xl flex items-center justify-between shadow-sm border-l-4 border-yellow-400 hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center relative">
+<span class="material-symbols-outlined text-on-surface-variant">shopping_bag</span>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white">
+<span class="text-[10px] font-bold text-white">M</span>
+</div>
+</div>
+<div>
+<p class="font-label-lg text-on-surface">Super U Douala</p>
+<p class="font-label-sm text-on-surface-variant">Today, 14:20 • MTN MoMo</p>
+</div>
+</div>
+<p class="font-label-lg text-on-surface font-bold">-5,500 XAF</p>
+</div>
+<!-- Orange Money Transaction -->
+<div class="bg-surface-container-lowest p-md rounded-xl flex items-center justify-between shadow-sm border-l-4 border-orange-500 hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center relative">
+<span class="material-symbols-outlined text-on-surface-variant">commute</span>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center border-2 border-white">
+<span class="text-[10px] font-bold text-white">O</span>
+</div>
+</div>
+<div>
+<p class="font-label-lg text-on-surface">Yango Ride</p>
+<p class="font-label-sm text-on-surface-variant">Yesterday, 18:45 • Orange Money</p>
+</div>
+</div>
+<p class="font-label-lg text-on-surface font-bold">-2,500 XAF</p>
+</div>
+<!-- Bank/Cash Transaction -->
+<div class="bg-surface-container-lowest p-md rounded-xl flex items-center justify-between shadow-sm border-l-4 border-primary hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">receipt_long</span>
+</div>
+<div>
+<p class="font-label-lg text-on-surface">Eneo Bill</p>
+<p class="font-label-sm text-on-surface-variant">22 July, 10:15 • Bank Transfer</p>
+</div>
+</div>
+<p class="font-label-lg text-on-surface font-bold">-12,000 XAF</p>
+</div>
+<!-- MTN Airtime -->
+<div class="bg-surface-container-lowest p-md rounded-xl flex items-center justify-between shadow-sm border-l-4 border-yellow-400 hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center relative">
+<span class="material-symbols-outlined text-on-surface-variant">phone_iphone</span>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white">
+<span class="text-[10px] font-bold text-white">M</span>
+</div>
+</div>
+<div>
+<p class="font-label-lg text-on-surface">MTN Cameroon</p>
+<p class="font-label-sm text-on-surface-variant">21 July, 09:00 • Airtime</p>
+</div>
+</div>
+<p class="font-label-lg text-on-surface font-bold">-1,000 XAF</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-lowest dark:bg-surface-container-low shadow-[0_-4px_12px_rgba(0,0,0,0.04)] flex justify-around items-center h-16 px-4 pb-safe">
+<!-- Home -->
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-4 py-1 hover:text-primary transition-all tap-highlight-transparent active:scale-95 duration-200 cursor-pointer">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</div>
+<!-- Expenses (Active) -->
+<div class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full px-4 py-1 tap-highlight-transparent active:scale-95 duration-200 cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="font-label-sm text-label-sm">Expenses</span>
+</div>
+<!-- Savings -->
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-4 py-1 hover:text-primary transition-all tap-highlight-transparent active:scale-95 duration-200 cursor-pointer">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Savings</span>
+</div>
+<!-- Profile -->
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-4 py-1 hover:text-primary transition-all tap-highlight-transparent active:scale-95 duration-200 cursor-pointer">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</div>
+</nav>
+<!-- Floating Action Button (Contextual for Home/Expenses) -->
+<button class="fixed right-6 bottom-24 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-transform z-40">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+<script>
+        // Simple micro-interaction for category cards
+        document.querySelectorAll('.bg-surface-container-lowest').forEach(card => {
+            card.addEventListener('touchstart', () => {
+                card.style.transform = 'scale(0.98)';
+            });
+            card.addEventListener('touchend', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+
+        // Initialize progress bar width animation
+        window.addEventListener('load', () => {
+            const progressBar = document.querySelector('.bg-primary');
+            if (progressBar) {
+                progressBar.style.width = '0%';
+                setTimeout(() => {
+                    progressBar.style.width = '74%';
+                }, 300);
+            }
+        });
+    </script>
+</body></html>

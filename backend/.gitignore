@@ -1,0 +1,31 @@
+# Secrets — NEVER commit
+.env
+.env.local
+.env.*.local
+secrets/
+*.pem
+*.key
+
+# Firebase service-account JSON
+firebase-service-account.json
+**/firebase-service-account*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# Uploads (user content — should live in object storage in prod)
+uploads/
+
+# Alembic — keep migrations, ignore local DB dumps
+alembic/__pycache__/
+*.sqlite3
+
+# NkapBot generated semantic-RAG index (rebuilt from knowledge_base.py)
+data/kb_index.json

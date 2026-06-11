@@ -1,0 +1,151 @@
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from pydantic import BaseModel, Field, EmailStr, validator
+from typing import Optional
+import re
+from core.database import get_db
+from core.security import (
+    hash_password, verify_password, create_access_token,
+    create_refresh_token,
+)
+from jose import jwt, JWTError
+from core.config import settings
+from models.user import User
+
+router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+# ═══════════════════════════════════════════════════════════════
+# Schemas
+# ═══════════════════════════════════════════════════════════════
+
+PHONE_MIN_DIGITS = 9  # Cameroon mobile numbers are 9 digits without country code.
+
+
+def _digits(s: str) -> str:
+    return re.sub(r"[^0-9]", "", s or "")
+
+
+class RegisterRequest(BaseModel):
+    full_name:     str = Field(..., min_length=3, max_length=100)
+    email:         EmailStr
+    phone:         str = Field(..., min_length=9)
+    password:      str = Field(..., min_length=6)
+    date_of_birth: Optional[str] = None
+    city:          Optional[str] = None
+
+    @validator("phone")
+    def validate_phone(cls, v):
+        if len(_digits(v)) < PHONE_MIN_DIGITS:
+            raise ValueError(f"Phone must have at least {PHONE_MIN_DIGITS} digits")
+        return v
+
+    @validator("password")
+    def validate_password(cls, v):
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one number")
+        return v
+
+
+class LoginRequest(BaseModel):
+    """Login is email-only. Phone/full-name identifiers are no longer accepted."""
+    identifier: EmailStr
+    password:   str = Field(..., min_length=1)
+
+
+class LoginResponseV2(BaseModel):
+    access_token:  str
+    refresh_token: str
+    token_type:    str = "bearer"
+    user_id:       str
+    full_name:     str
+    email:         str
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+def _build_token_response(user: User) -> LoginResponseV2:
+    return LoginResponseV2(
+        access_token=create_access_token({"sub": str(user.id), "email": user.email}),
+        refresh_token=create_refresh_token({"sub": str(user.id)}),
+        user_id=str(user.id),
+        full_name=user.full_name,
+        email=user.email,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════
+# Endpoints
+# ═══════════════════════════════════════════════════════════════
+
+@router.post("/register", response_model=LoginResponseV2, status_code=201)
+async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    email = body.email.lower().strip()
+    phone_digits = _digits(body.phone)
+    last9 = phone_digits[-PHONE_MIN_DIGITS:]
+
+    # Email uniqueness
+    res = await db.execute(select(User).where(User.email == email))
+    if res.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
+
+    # Phone uniqueness — exact match on last-9 digits in normalized form
+    phone_norm = func.regexp_replace(User.phone, r"[^0-9]", "", "g")
+    res = await db.execute(
+        select(User).where(func.right(phone_norm, PHONE_MIN_DIGITS) == last9)
+    )
+    if res.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="An account with this phone already exists")
+
+    user = User(
+        full_name=body.full_name.strip(),
+        email=email,
+        phone=body.phone.strip(),
+        password_hash=hash_password(body.password),
+        date_of_birth=body.date_of_birth,
+        city=body.city,
+    )
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
+    return _build_token_response(user)
+
+
+@router.post("/login", response_model=LoginResponseV2)
+async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
+    """Login is email-only. EmailStr in LoginRequest rejects malformed addresses
+    at the schema layer (422). Unknown-but-syntactically-valid emails fall
+    through to the generic 401 here so attackers can't enumerate accounts."""
+    email = body.identifier.lower().strip()
+    res = await db.execute(select(User).where(User.email == email))
+    user = res.scalar_one_or_none()
+    if not user or not verify_password(body.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return _build_token_response(user)
+
+
+@router.post("/refresh", response_model=LoginResponseV2)
+async def refresh_token(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        payload = jwt.decode(
+            body.refresh_token, settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    res = await db.execute(select(User).where(User.id == user_id))
+    user = res.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return _build_token_response(user)

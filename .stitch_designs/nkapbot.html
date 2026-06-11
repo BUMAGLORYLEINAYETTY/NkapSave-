@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NkapBot - AI Financial Assistant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .chat-bubble-ai {
+            border-bottom-left-radius: 4px;
+        }
+        .chat-bubble-user {
+            border-bottom-right-radius: 4px;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#ffddb5",
+                      "inverse-surface": "#213145",
+                      "on-tertiary-fixed-variant": "#643f00",
+                      "surface-container-highest": "#d3e4fe",
+                      "outline-variant": "#bccabf",
+                      "primary-container": "#27a770",
+                      "primary": "#006c45",
+                      "surface-variant": "#d3e4fe",
+                      "secondary-fixed": "#e2e2e5",
+                      "on-primary-container": "#00341e",
+                      "on-secondary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "error": "#ba1a1a",
+                      "primary-fixed": "#83f9bb",
+                      "tertiary-container": "#ca8400",
+                      "on-secondary-container": "#636467",
+                      "on-background": "#0b1c30",
+                      "on-tertiary-fixed": "#2a1800",
+                      "inverse-on-surface": "#eaf1ff",
+                      "surface-container-low": "#eff4ff",
+                      "on-primary-fixed": "#002112",
+                      "secondary": "#5d5e61",
+                      "inverse-primary": "#66dca0",
+                      "surface": "#f8f9ff",
+                      "on-secondary-fixed-variant": "#454749",
+                      "on-error-container": "#93000a",
+                      "surface-container-high": "#dce9ff",
+                      "surface-dim": "#cbdbf5",
+                      "on-primary-fixed-variant": "#005233",
+                      "outline": "#6d7a71",
+                      "on-surface-variant": "#3d4a41",
+                      "on-error": "#ffffff",
+                      "secondary-fixed-dim": "#c6c6c9",
+                      "tertiary-fixed-dim": "#ffb957",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "on-surface": "#0b1c30",
+                      "surface-tint": "#006c45",
+                      "primary-fixed-dim": "#66dca0",
+                      "on-tertiary": "#ffffff",
+                      "surface-bright": "#f8f9ff",
+                      "tertiary": "#835400",
+                      "secondary-container": "#e2e2e5",
+                      "background": "#f8f9ff",
+                      "on-tertiary-container": "#402700",
+                      "surface-container": "#e5eeff",
+                      "on-secondary-fixed": "#1a1c1e"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "md": "16px",
+                      "lg": "24px",
+                      "base": "4px",
+                      "margin-desktop": "32px",
+                      "gutter": "16px",
+                      "margin-mobile": "16px",
+                      "xs": "4px",
+                      "sm": "8px",
+                      "xl": "32px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Hanken Grotesk"],
+                      "label-lg": ["Hanken Grotesk"],
+                      "display-lg": ["Hanken Grotesk"],
+                      "body-lg": ["Hanken Grotesk"],
+                      "headline-lg-mobile": ["Hanken Grotesk"],
+                      "body-md": ["Hanken Grotesk"],
+                      "label-sm": ["Hanken Grotesk"],
+                      "headline-md": ["Hanken Grotesk"]
+              },
+              "fontSize": {
+                      "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["22px", {"lineHeight": "28px", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body-md text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim shadow-sm w-full sticky top-0 z-50 flex items-center justify-between px-margin-mobile py-sm">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border-2 border-primary-fixed-dim">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold">NkapBot</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                    Online Assistant
+                </p>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-low transition-colors active:scale-95 duration-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">fingerprint</span>
+</button>
+</header>
+<!-- Main Content (Chat Canvas) -->
+<main class="flex-grow overflow-y-auto px-margin-mobile py-lg max-w-[800px] mx-auto w-full pb-32">
+<!-- Welcome Message -->
+<div class="flex flex-col gap-md mb-xl">
+<div class="flex gap-sm">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-on-primary-fixed">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-md rounded-2xl chat-bubble-ai max-w-[85%] shadow-sm">
+<p class="font-body-md text-on-surface">Hello! I've been analyzing your spending for this month. You've saved <span class="text-primary font-bold">15,000 CFA</span> more than last month. Would you like to see the breakdown?</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-sm">2:41 PM</p>
+</div>
+</div>
+</div>
+<!-- Rich Card: Spending Breakdown -->
+<div class="flex flex-col gap-md mb-xl">
+<div class="flex gap-sm">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-on-primary-fixed">smart_toy</span>
+</div>
+<div class="flex flex-col gap-sm w-full max-w-[90%]">
+<div class="bg-surface-container-lowest p-lg rounded-2xl shadow-sm border border-outline-variant/30">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-md text-headline-md text-on-surface">September Breakdown</h3>
+<span class="material-symbols-outlined text-tertiary">query_stats</span>
+</div>
+<!-- Chart Representation -->
+<div class="relative h-48 w-full bg-surface-container-low rounded-xl flex items-end justify-around p-md mb-md">
+<div class="w-12 bg-primary rounded-t-lg transition-all hover:brightness-110 cursor-pointer relative group" style="height: 60%;">
+<span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Food: 45k</span>
+</div>
+<div class="w-12 bg-tertiary-container rounded-t-lg transition-all hover:brightness-110 cursor-pointer relative group" style="height: 85%;">
+<span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Bills: 62k</span>
+</div>
+<div class="w-12 bg-primary-container rounded-t-lg transition-all hover:brightness-110 cursor-pointer relative group" style="height: 40%;">
+<span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Transport: 28k</span>
+</div>
+<div class="w-12 bg-secondary rounded-t-lg transition-all hover:brightness-110 cursor-pointer relative group" style="height: 25%;">
+<span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Other: 15k</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div class="p-sm bg-surface-container-high rounded-lg">
+<p class="font-label-sm text-on-surface-variant">Top Expense</p>
+<p class="font-headline-md text-on-surface">Utility Bills</p>
+</div>
+<div class="p-sm bg-primary-container/10 rounded-lg border border-primary-container/20">
+<p class="font-label-sm text-primary">Budget Status</p>
+<p class="font-headline-md text-primary font-bold">On Track</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- User Response Simulation -->
+<div class="flex flex-col items-end gap-md mb-xl">
+<div class="bg-primary text-on-primary p-md rounded-2xl chat-bubble-user max-w-[85%] shadow-md">
+<p class="font-body-md">What's my health score like this week?</p>
+<p class="font-label-sm text-label-sm text-on-primary/70 mt-sm text-right">2:43 PM</p>
+</div>
+</div>
+<!-- AI Rich Response: Health Score -->
+<div class="flex flex-col gap-md mb-xl">
+<div class="flex gap-sm">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px] text-on-primary-fixed">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-lg rounded-2xl chat-bubble-ai max-w-[90%] shadow-sm border border-outline-variant/20">
+<div class="flex items-center gap-md mb-md">
+<div class="relative w-16 h-16 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full -rotate-90">
+<circle class="text-surface-container-highest" cx="32" cy="32" fill="none" r="28" stroke="currentColor" stroke-width="6"></circle>
+<circle class="text-primary" cx="32" cy="32" fill="none" r="28" stroke="currentColor" stroke-dasharray="175.9" stroke-dashoffset="35.18" stroke-width="6"></circle>
+</svg>
+<span class="font-headline-lg text-primary">82</span>
+</div>
+<div>
+<h4 class="font-headline-md text-on-surface">Excellent!</h4>
+<p class="font-body-md text-on-surface-variant">Your Financial Health Score is up by 4 points.</p>
+</div>
+</div>
+<div class="space-y-sm">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<p class="font-body-md text-on-surface">Bills paid on time</p>
+</div>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<p class="font-body-md text-on-surface">Njangi contribution secured</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Interface: Quick Replies & Input -->
+<div class="fixed bottom-0 left-0 w-full bg-surface-container-lowest/80 backdrop-blur-xl z-50 pb-safe">
+<!-- Quick Reply Chips -->
+<div class="flex gap-sm overflow-x-auto px-margin-mobile py-md no-scrollbar">
+<button class="whitespace-nowrap px-md py-sm bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container text-on-surface-variant rounded-full font-label-lg transition-all flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px]">favorite</span> Check Health Score
+            </button>
+<button class="whitespace-nowrap px-md py-sm bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container text-on-surface-variant rounded-full font-label-lg transition-all flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px]">rocket_launch</span> Project Goal
+            </button>
+<button class="whitespace-nowrap px-md py-sm bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container text-on-surface-variant rounded-full font-label-lg transition-all flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px]">lightbulb</span> Financial Tips
+            </button>
+</div>
+<!-- Chat Input Bar -->
+<div class="px-margin-mobile pb-md">
+<div class="flex items-center gap-sm bg-surface-container-low rounded-full px-md py-xs border border-outline-variant/30 focus-within:border-primary transition-colors">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<input class="bg-transparent border-none focus:ring-0 flex-grow font-body-md text-on-surface py-md" placeholder="Ask NkapBot anything..." type="text"/>
+<button class="w-10 h-10 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+<!-- Bottom Navigation Shell (Consistent with Shared Components) -->
+<nav class="flex justify-around items-center h-16 px-md bg-surface-container-lowest dark:bg-inverse-surface shadow-[0_-4px_12px_rgba(0,0,0,0.04)] rounded-t-xl">
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/20 rounded-full px-4 py-1 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/20 rounded-full px-4 py-1 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Expenses</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/20 rounded-full px-4 py-1 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-sm text-label-sm">Njangi</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<span class="font-label-sm text-label-sm">NkapBot</span>
+</div>
+</nav>
+</div>
+<!-- Floating Atmosphere Elements -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 opacity-30 overflow-hidden">
+<div class="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary-fixed-dim blur-[120px] animate-pulse"></div>
+<div class="absolute top-[40%] -right-[20%] w-[60%] h-[60%] rounded-full bg-tertiary-fixed blur-[150px] animate-pulse" style="animation-delay: 2s;"></div>
+</div>
+<script>
+        // Micro-interaction for input animation
+        const chatInput = document.querySelector('input');
+        const sendBtn = document.querySelector('button .material-symbols-outlined[style*="FILL"]');
+
+        chatInput.addEventListener('focus', () => {
+            sendBtn.parentElement.classList.add('scale-110');
+        });
+
+        chatInput.addEventListener('blur', () => {
+            sendBtn.parentElement.classList.remove('scale-110');
+        });
+
+        // Simple scroll to bottom on load
+        window.scrollTo(0, document.body.scrollHeight);
+    </script>
+</body></html>

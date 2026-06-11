@@ -1,0 +1,31 @@
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+sqlalchemy==2.0.30
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+python-jose[cryptography]==3.3.0
+python-dotenv==1.0.1
+pydantic==2.7.1
+pydantic-settings==2.2.1
+python-multipart==0.0.9
+httpx==0.28.1
+bcrypt==4.0.1
+APScheduler==3.10.4
+alembic==1.13.2
+twilio>=8.10,<9.0
+firebase-admin>=6.5.0
+# Exports
+reportlab>=4.2
+openpyxl>=3.1
+# OCR (needs system `tesseract` binary — `brew install tesseract tesseract-lang`)
+pytesseract>=0.3.10
+Pillow>=10.3
+# NkapBot — Anthropic Claude
+anthropic>=0.34.0
+# NkapBot semantic RAG — embeddings.
+#   The Voyage / OpenAI providers are pure HTTP and need no extra packages
+#   (httpx, above, powers them) — just set VOYAGE_API_KEY (recommended) or
+#   OPENAI_API_KEY in .env. With no key the pipeline still runs on a built-in
+#   lexical fallback (lower quality). For fully-offline local embeddings,
+#   uncomment the line below (pulls in PyTorch — large):
+# sentence-transformers>=2.7
