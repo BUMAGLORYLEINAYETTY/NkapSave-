@@ -1059,8 +1059,8 @@ class _SavingsScreenState extends State<SavingsScreen>
     padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
     children: [
       Shimmer.fromColors(
-        baseColor: AppColors.surface2,
-        highlightColor: AppColors.surface3,
+        baseColor: AppColors.surface4,
+        highlightColor: AppColors.surface2,
         child: Column(children: [
           Container(height: 180, decoration: BoxDecoration(
               color: AppColors.surface2,

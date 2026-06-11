@@ -92,7 +92,10 @@ class _NjangiScreenState extends State<NjangiScreen>
         _fadeCtrl.forward(from: 0);
       }
     } catch (e) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        _fadeCtrl.forward(from: 0); // never leave the body stuck at opacity 0
+      }
     }
   }
 
@@ -1134,7 +1137,7 @@ class _NjangiScreenState extends State<NjangiScreen>
   }
 
   Widget _buildSkeleton() => Shimmer.fromColors(
-    baseColor: AppColors.surface2, highlightColor: AppColors.surface3,
+    baseColor: AppColors.surface4, highlightColor: AppColors.surface2,
     child: SingleChildScrollView(padding: const EdgeInsets.all(16),
         child: Column(children: [
       const SizedBox(height: 60),

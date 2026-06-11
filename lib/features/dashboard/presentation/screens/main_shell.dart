@@ -117,6 +117,7 @@ class _NavItem extends StatelessWidget {
     behavior: HitTestBehavior.opaque,
     onTap: onTap,
     child: Center(
+      heightFactor: 1, // shrink-wrap: never let the nav bar absorb body height
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),

@@ -828,8 +828,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── States ──────────────────────────────────────────────────
   Widget _skeleton() => Shimmer.fromColors(
-    baseColor: AppColors.surface2,
-    highlightColor: AppColors.surface3,
+    baseColor: AppColors.surface4,
+    highlightColor: AppColors.surface2,
     child: Padding(
       padding: const EdgeInsets.all(16),
       child: Column(children: [
