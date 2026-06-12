@@ -546,7 +546,10 @@ class _NjangiScreenState extends State<NjangiScreen>
             ),
           ),
           const SizedBox(height: 16),
-          Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          // IntrinsicHeight bounds the stretch: a bare stretched Row inside
+          // this unbounded Column forces an infinite height and kills layout.
+          IntrinsicHeight(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(14),
@@ -603,7 +606,7 @@ class _NjangiScreenState extends State<NjangiScreen>
                 ]),
               ),
             ),
-          ]),
+          ])),
         ]),
       ),
     );
