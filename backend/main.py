@@ -1,4 +1,5 @@
 import logging
+import pillow_heif
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -16,6 +17,10 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
 logger = logging.getLogger("nkapsave")
+
+# Let Pillow open HEIC/HEIF photos (the default format for iPhone camera
+# uploads) — used by both the profile-picture upload and the receipt OCR.
+pillow_heif.register_heif_opener()
 
 
 @asynccontextmanager

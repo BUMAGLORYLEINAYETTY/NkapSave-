@@ -147,12 +147,9 @@ class ApiService {
       if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
       if (city != null) 'city': city,
     });
-    await _saveTokens(
-      access: res.data['access_token'],
-      refresh: res.data['refresh_token'],
-      userId: res.data['user_id'],
-    );
-    return res.data;
+    // Registration no longer auto-logs in — user must verify email first.
+    // The response is {"message": "...", "email": "..."}.
+    return res.data as Map<String, dynamic>;
   }
 
   static Future<Map<String, dynamic>> login({
@@ -166,6 +163,10 @@ class ApiService {
       userId: res.data['user_id'],
     );
     return res.data;
+  }
+
+  static Future<void> resendVerification(String email) async {
+    await _dio.post('/auth/resend-verification', data: {'email': email});
   }
 
   static Future<void> logout() async => clearTokens();
@@ -534,8 +535,22 @@ class ApiService {
     return res.data;
   }
 
-  static Future<Map<String, dynamic>> contributeNjangi(String groupId) async {
-    final res = await _dio.post('/njangi/groups/$groupId/contribute');
+  /// Start a Njangi contribution via Campay MoMo. Returns
+  /// `{status: 'pending', contribution_id, reference}` — the caller must
+  /// poll [pollNjangiContribution] until a final status comes back.
+  static Future<Map<String, dynamic>> contributeNjangi(
+      String groupId, {required String phone, required String provider}) async {
+    final res = await _dio.post('/njangi/groups/$groupId/contribute',
+        data: {'phone': phone, 'provider': provider});
+    return res.data;
+  }
+
+  /// Poll Campay for the outcome of a pending contribution. Returns
+  /// `{status: 'pending'|'successful'|'failed', all_paid, payout_msg}`.
+  static Future<Map<String, dynamic>> pollNjangiContribution(
+      String groupId, String contributionId) async {
+    final res = await _dio.post(
+        '/njangi/groups/$groupId/contribute/$contributionId/poll');
     return res.data;
   }
 

@@ -3,6 +3,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/onboarding_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
+import '../../features/auth/presentation/screens/email_pending_screen.dart';
 import '../../features/auth/presentation/screens/pin_screen.dart';
 import '../../features/auth/presentation/screens/feature_selection_screen.dart';
 import '../../features/auth/presentation/screens/profile_setup_screen.dart';
@@ -31,7 +32,7 @@ class AppRouter {
       final loggedIn = ApiService.isLoggedIn;
       const authPaths = {
         '/login', '/register', '/splash', '/onboarding',
-        '/feature-select', '/profile-setup',
+        '/feature-select', '/profile-setup', '/email-pending',
       };
       final onAuthPage = authPaths.contains(state.matchedLocation);
       if (loggedIn && onAuthPage) return '/home';
@@ -52,6 +53,12 @@ class AppRouter {
       GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
       GoRoute(path: '/login',      builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register',   builder: (_, __) => const RegisterScreen()),
+      GoRoute(
+        path: '/email-pending',
+        builder: (_, state) => EmailPendingScreen(
+          email: (state.extra as String?) ?? '',
+        ),
+      ),
       GoRoute(path: '/pin',        builder: (_, __) => const PinScreen()),
       GoRoute(path: '/feature-select', builder: (_, __) => const FeatureSelectionScreen()),
       GoRoute(path: '/profile-setup',  builder: (_, __) => const ProfileSetupScreen()),

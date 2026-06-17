@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -20,13 +21,43 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   bool _showPass = false;
   String? _error;
+  // Set to the unverified email when the backend returns 403 "email_not_verified"
+  // so we can show a targeted message + resend option.
+  String? _unverifiedEmail;
+  bool _justVerified = false;   // true when landing from the email link
 
-  // RFC 5322-lite: catches the malformed inputs users actually type without
-  // shipping a 200-line regex. Server still validates with EmailStr.
   static final RegExp _emailRegex =
       RegExp(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
 
   bool _isValidEmail(String s) => _emailRegex.hasMatch(s);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final params = GoRouterState.of(context).uri.queryParameters;
+      if (params['verified'] == 'true') {
+        setState(() => _justVerified = true);
+      }
+    });
+  }
+
+  Future<void> _resendFromLogin() async {
+    final email = _idCtrl.text.trim();
+    if (email.isEmpty) return;
+    try {
+      await ApiService.resendVerification(email);
+      if (mounted) {
+        setState(() {
+          _error = null;
+          _unverifiedEmail = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Verification email resent — check your inbox.')),
+        );
+      }
+    } catch (_) {}
+  }
 
   Future<void> _login() async {
     final email = _idCtrl.text.trim();
@@ -47,7 +78,15 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       setState(() {
         _loading = false;
-        _error = 'Wrong email or password. Check and try again.';
+        if (e is DioException &&
+            e.response?.statusCode == 403 &&
+            (e.response?.data['detail'] ?? '') == 'email_not_verified') {
+          _unverifiedEmail = email;
+          _error = 'Please verify your email before logging in.';
+        } else {
+          _unverifiedEmail = null;
+          _error = 'Wrong email or password. Check and try again.';
+        }
       });
     }
   }
@@ -97,6 +136,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text('Secure access to your savings',
                           style: AppTextStyles.bodyMuted),
                       const SizedBox(height: 32),
+                      // Email verified success banner
+                      if (_justVerified) ...[
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryDim,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.primaryMid),
+                          ),
+                          child: Row(children: [
+                            Icon(Icons.check_circle_rounded,
+                                size: 18, color: AppColors.primary),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Email verified! You can now log in.',
+                                style: AppTextStyles.body
+                                    .copyWith(color: AppColors.primary),
+                              ),
+                            ),
+                          ]),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       // Form card
                       NkapCard(
                         color: AppColors.surface1,
@@ -113,14 +176,31 @@ class _LoginScreenState extends State<LoginScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: AppColors.danger.withOpacity(0.4)),
                                 ),
-                                child: Row(children: [
-                                  const Icon(Icons.error_outline_rounded,
-                                      color: AppColors.danger, size: 18),
-                                  const SizedBox(width: 10),
-                                  Expanded(child: Text(_error!,
-                                      style: AppTextStyles.body
-                                          .copyWith(color: AppColors.danger))),
-                                ]),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(children: [
+                                      const Icon(Icons.error_outline_rounded,
+                                          color: AppColors.danger, size: 18),
+                                      const SizedBox(width: 10),
+                                      Expanded(child: Text(_error!,
+                                          style: AppTextStyles.body
+                                              .copyWith(color: AppColors.danger))),
+                                    ]),
+                                    if (_unverifiedEmail != null) ...[
+                                      const SizedBox(height: 10),
+                                      GestureDetector(
+                                        onTap: _resendFromLogin,
+                                        child: Text(
+                                          'Resend verification email',
+                                          style: AppTextStyles.label.copyWith(
+                                              color: AppColors.primary,
+                                              decoration: TextDecoration.underline),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 16),
                             ],

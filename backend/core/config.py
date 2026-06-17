@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     APP_NAME: str = "NkapSave"
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"  # development | staging | production
+    # Public URL used to build email links (verification, statements).
+    # Set to your production domain in prod (e.g. https://nkapsave.com).
+    APP_BASE_URL: str = "http://localhost:8000"
 
     # ── Feature flags ────────────────────────────────────────
     # CNI / identity verification flow. Off while we redesign the review

@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel
 from typing import Optional
-import os, uuid as uuidlib
+import io, os, uuid as uuidlib
+from PIL import Image, UnidentifiedImageError
 from core.database import get_db
 from core.security import get_current_user
 from models.user import User
@@ -125,17 +126,22 @@ async def upload_picture(
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
 
-    # Save with unique name
-    ext = os.path.splitext(file.filename or "img.jpg")[1] or ".jpg"
-    filename = str(uuidlib.uuid4()) + ext
-    filepath = os.path.join(UPLOAD_DIR, filename)
-
     contents = await file.read()
     if len(contents) > 5 * 1024 * 1024:  # 5MB limit
         raise HTTPException(status_code=400, detail="File too large (max 5MB)")
 
-    with open(filepath, "wb") as f:
-        f.write(contents)
+    # Normalize every upload to JPEG. iPhones upload HEIC/HEIF photos, which
+    # Flutter's NetworkImage can't decode — re-encoding here means the
+    # avatar always renders regardless of the source format.
+    try:
+        img = Image.open(io.BytesIO(contents))
+        img = img.convert("RGB")
+    except UnidentifiedImageError:
+        raise HTTPException(status_code=400, detail="Unrecognized image format")
+
+    filename = f"{uuidlib.uuid4()}.jpg"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    img.save(filepath, "JPEG", quality=85)
 
     # Update user record with URL
     res = await db.execute(select(User).where(User.id == current_user["user_id"]))
@@ -151,4 +157,15 @@ async def get_picture(filename: str):
     filepath = os.path.join(UPLOAD_DIR, filename)
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="Picture not found")
+    # On-the-fly HEIC → JPEG conversion for old uploads that were saved before
+    # the upload endpoint was updated to always re-encode as JPEG.
+    if filename.lower().endswith((".heic", ".heif")):
+        try:
+            jpg_path = filepath.rsplit(".", 1)[0] + ".jpg"
+            if not os.path.exists(jpg_path):
+                img = Image.open(filepath).convert("RGB")
+                img.save(jpg_path, "JPEG", quality=85)
+            return FileResponse(jpg_path, media_type="image/jpeg")
+        except Exception:
+            pass  # fall through and serve the raw file
     return FileResponse(filepath)

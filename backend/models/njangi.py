@@ -76,6 +76,14 @@ class NjangiContribution(Base):
     amount     = Column(Float, nullable=False)
     cycle      = Column(Integer, nullable=False)
     provider   = Column(String(30), default="MTN Money")
+    # MoMo payment tracking. New contributions start "pending" and only
+    # flip to "successful" once Campay confirms the Collect; "failed"
+    # contributions don't count toward `has_paid`. Pre-existing rows (from
+    # before this column existed) default to "successful" since they were
+    # created at the moment a contribution was recorded as paid.
+    status         = Column(String(20), nullable=False, default="successful")
+    momo_reference = Column(String(64), nullable=True)
+    phone          = Column(String(20), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

@@ -7,200 +7,184 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#002107",
+                        "surface-tint": "#2a6b2c",
+                        "surface-dim": "#d9dadb",
+                        "secondary-fixed-dim": "#90d792",
+                        "on-tertiary-fixed-variant": "#42493e",
+                        "surface-container-low": "#f3f4f5",
+                        "on-secondary": "#ffffff",
+                        "on-background": "#191c1d",
+                        "surface-container": "#edeeef",
+                        "tertiary-fixed-dim": "#c2c9bb",
+                        "inverse-primary": "#91d78a",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e7e8e9",
+                        "background": "#f8f9fa",
+                        "inverse-surface": "#2e3132",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#1b5e20",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#acf4a4",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#41493e",
+                        "on-secondary-container": "#2e7238",
+                        "on-tertiary-fixed": "#171d14",
+                        "error-container": "#ffdad6",
+                        "outline": "#717a6d",
+                        "primary-fixed-dim": "#91d78a",
+                        "on-tertiary-container": "#c1c8ba",
+                        "on-primary-fixed": "#002203",
+                        "surface-bright": "#f8f9fa",
+                        "tertiary": "#363d33",
+                        "secondary-container": "#abf4ac",
+                        "tertiary-fixed": "#dee5d6",
+                        "on-primary-fixed-variant": "#0c5216",
+                        "surface-variant": "#e1e3e4",
+                        "outline-variant": "#c0c9bb",
+                        "primary": "#00450d",
+                        "on-primary-container": "#90d689",
+                        "tertiary-container": "#4d5449",
+                        "inverse-on-surface": "#f0f1f2",
+                        "secondary": "#286b33",
+                        "surface": "#f8f9fa",
+                        "secondary-fixed": "#abf4ac",
+                        "on-secondary-fixed-variant": "#07521d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "md": "24px",
+                        "lg": "40px",
+                        "base": "8px",
+                        "margin": "20px",
+                        "gutter": "16px",
+                        "sm": "12px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Hanken Grotesk"],
+                        "label-lg": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"],
+                        "headline-xl": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
 <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
         body {
             font-family: 'Hanken Grotesk', sans-serif;
-            background-color: #f8f9ff;
+            background-color: #f8f9fa;
         }
         .pin-input:focus {
             outline: none;
-            border-color: #006c45;
-            box-shadow: 0 0 0 2px rgba(0, 108, 69, 0.1);
+            border-color: #00450d;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 1px #00450d;
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
+        input:focus {
+            outline: none;
         }
     </style>
-<script id="tailwind-config">
-        tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: {
-              "colors": {
-                      "tertiary-container": "#ca8400",
-                      "on-secondary-fixed": "#1a1c1e",
-                      "inverse-surface": "#213145",
-                      "secondary": "#5d5e61",
-                      "on-secondary-container": "#636467",
-                      "surface-container-low": "#eff4ff",
-                      "outline-variant": "#bccabf",
-                      "on-tertiary": "#ffffff",
-                      "tertiary": "#835400",
-                      "surface-container-lowest": "#ffffff",
-                      "surface-container": "#e5eeff",
-                      "secondary-container": "#e2e2e5",
-                      "tertiary-fixed": "#ffddb5",
-                      "on-surface": "#0b1c30",
-                      "secondary-fixed": "#e2e2e5",
-                      "on-primary-fixed-variant": "#005233",
-                      "on-primary": "#ffffff",
-                      "inverse-primary": "#66dca0",
-                      "error": "#ba1a1a",
-                      "secondary-fixed-dim": "#c6c6c9",
-                      "on-primary-fixed": "#002112",
-                      "on-primary-container": "#00341e",
-                      "surface-variant": "#d3e4fe",
-                      "surface-container-highest": "#d3e4fe",
-                      "primary-fixed": "#83f9bb",
-                      "on-tertiary-container": "#402700",
-                      "on-background": "#0b1c30",
-                      "primary-container": "#27a770",
-                      "surface-bright": "#f8f9ff",
-                      "surface": "#f8f9ff",
-                      "primary-fixed-dim": "#66dca0",
-                      "on-secondary-fixed-variant": "#454749",
-                      "inverse-on-surface": "#eaf1ff",
-                      "tertiary-fixed-dim": "#ffb957",
-                      "error-container": "#ffdad6",
-                      "on-secondary": "#ffffff",
-                      "surface-dim": "#cbdbf5",
-                      "background": "#f8f9ff",
-                      "surface-tint": "#006c45",
-                      "surface-container-high": "#dce9ff",
-                      "on-error-container": "#93000a",
-                      "primary": "#006c45",
-                      "on-tertiary-fixed": "#2a1800",
-                      "outline": "#6d7a71",
-                      "on-surface-variant": "#3d4a41",
-                      "on-tertiary-fixed-variant": "#643f00",
-                      "on-error": "#ffffff"
-              },
-              "borderRadius": {
-                      "DEFAULT": "0.25rem",
-                      "lg": "0.5rem",
-                      "xl": "0.75rem",
-                      "full": "9999px"
-              },
-              "spacing": {
-                      "md": "16px",
-                      "xl": "32px",
-                      "lg": "24px",
-                      "margin-desktop": "32px",
-                      "margin-mobile": "16px",
-                      "gutter": "16px",
-                      "xs": "4px",
-                      "sm": "8px",
-                      "base": "4px"
-              },
-              "fontFamily": {
-                      "label-sm": ["Hanken Grotesk"],
-                      "headline-lg-mobile": ["Hanken Grotesk"],
-                      "display-lg": ["Hanken Grotesk"],
-                      "headline-lg": ["Hanken Grotesk"],
-                      "body-md": ["Hanken Grotesk"],
-                      "headline-md": ["Hanken Grotesk"],
-                      "label-lg": ["Hanken Grotesk"],
-                      "body-lg": ["Hanken Grotesk"]
-              },
-              "fontSize": {
-                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
-                      "headline-lg-mobile": ["22px", {"lineHeight": "28px", "fontWeight": "700"}],
-                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
-                      "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
-                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
-                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
-                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
-                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
-              }
-            },
-          },
-        }
-      </script>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
-  </head>
-<body class="flex items-center justify-center min-h-screen p-margin-mobile">
-<!-- Background Decoration -->
-<div class="fixed inset-0 -z-10 overflow-hidden">
-<div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-container opacity-10 rounded-full blur-3xl"></div>
-<div class="absolute -bottom-24 -right-24 w-96 h-96 bg-tertiary-container opacity-10 rounded-full blur-3xl"></div>
-</div>
+</head>
+<body class="flex items-center justify-center min-h-screen p-margin bg-surface">
 <!-- Main Login Canvas -->
-<main class="w-full max-w-[440px] flex flex-col gap-xl">
-<!-- Header / Brand Anchor -->
-<header class="flex flex-col items-center gap-sm">
-<div class="w-16 h-16 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 mb-xs">
-<span class="material-symbols-outlined text-white text-[32px]" style="font-variation-settings: 'FILL' 1;">shield_person</span>
+<main class="w-full max-w-[400px] flex flex-col gap-lg items-center">
+<!-- Header / Brand -->
+<header class="flex flex-col items-center gap-base text-center">
+<div class="w-16 h-16 bg-primary-container rounded-xl flex items-center justify-center shadow-sm mb-base">
+<span class="material-symbols-outlined text-on-primary text-[32px]" style="font-variation-settings: 'FILL' 1;">shield_person</span>
 </div>
-<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">NkapSave</h1>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">NkapSave</h1>
 <p class="font-body-md text-body-md text-on-surface-variant">Secure access to your savings</p>
 </header>
 <!-- Form Card -->
-<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.04)] p-lg border border-outline-variant/30">
-<form class="flex flex-col gap-lg" onsubmit="return false;">
+<div class="w-full bg-surface-container-lowest rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-lg border border-outline-variant/40">
+<form class="flex flex-col gap-md" onsubmit="return false;">
 <!-- Phone Number Input -->
-<div class="flex flex-col gap-xs">
+<div class="flex flex-col gap-base">
 <label class="font-label-lg text-label-lg text-on-surface-variant ml-xs">Phone Number</label>
-<div class="relative flex items-center">
-<div class="absolute left-md flex items-center gap-xs pr-sm border-r border-outline-variant">
+<div class="relative flex items-center group">
+<div class="absolute left-md flex items-center gap-xs pr-sm border-r border-outline-variant transition-colors group-focus-within:border-primary">
 <span class="text-on-surface font-label-lg text-label-lg">+237</span>
 </div>
-<input class="w-full h-14 pl-[72px] pr-md bg-surface border-outline-variant rounded-xl font-body-lg text-body-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-outline" placeholder="6XX XXX XXX" type="tel"/>
+<input class="w-full h-14 pl-[76px] pr-md bg-surface-container-lowest border border-outline-variant rounded-lg font-body-lg text-body-lg focus:border-primary transition-all placeholder:text-outline/60" placeholder="6XX XXX XXX" type="tel"/>
 </div>
 </div>
 <!-- 4-Digit PIN -->
-<div class="flex flex-col gap-xs">
+<div class="flex flex-col gap-base">
 <div class="flex justify-between items-center px-xs">
 <label class="font-label-lg text-label-lg text-on-surface-variant">Enter PIN</label>
-<a class="font-label-sm text-label-sm text-primary hover:underline" href="#">Forgot PIN?</a>
+<a class="font-label-md text-label-md text-primary hover:underline" href="#">Forgot PIN?</a>
 </div>
-<div class="flex justify-between gap-sm">
-<input autocomplete="off" class="pin-input w-full h-14 text-center bg-surface border-outline-variant rounded-xl text-headline-md font-headline-md focus:ring-0 transition-all" maxlength="1" type="password"/>
-<input autocomplete="off" class="pin-input w-full h-14 text-center bg-surface border-outline-variant rounded-xl text-headline-md font-headline-md focus:ring-0 transition-all" maxlength="1" type="password"/>
-<input autocomplete="off" class="pin-input w-full h-14 text-center bg-surface border-outline-variant rounded-xl text-headline-md font-headline-md focus:ring-0 transition-all" maxlength="1" type="password"/>
-<input autocomplete="off" class="pin-input w-full h-14 text-center bg-surface border-outline-variant rounded-xl text-headline-md font-headline-md focus:ring-0 transition-all" maxlength="1" type="password"/>
+<div class="grid grid-cols-4 gap-gutter">
+<input autocomplete="off" class="pin-input w-full h-14 text-center bg-surface-container-low border border-outline-variant rounded-lg text-headline-md font-headline-md transition-all" maxlength="1" type="password"/>
+<input autocomplete="off" class="pin-input w-full h-14 text-center bg-surface-container-low border border-outline-variant rounded-lg text-headline-md font-headline-md transition-all" maxlength="1" type="password"/>
+<input autocomplete="off" class="pin-input w-full h-14 text-center bg-surface-container-low border border-outline-variant rounded-lg text-headline-md font-headline-md transition-all" maxlength="1" type="password"/>
+<input autocomplete="off" class="pin-input w-full h-14 text-center bg-surface-container-low border border-outline-variant rounded-lg text-headline-md font-headline-md transition-all" maxlength="1" type="password"/>
 </div>
 </div>
 <!-- Login Actions -->
-<div class="flex flex-col gap-md pt-xs">
-<button class="w-full h-14 bg-primary text-on-primary font-label-lg text-label-lg rounded-xl shadow-md active:scale-95 transition-transform duration-100 flex items-center justify-center gap-sm" type="submit">
+<div class="flex flex-col gap-sm pt-sm">
+<button class="w-full h-14 bg-primary text-on-primary font-label-lg text-label-lg rounded-lg shadow-sm active:scale-[0.98] transition-all duration-100 flex items-center justify-center gap-sm" type="submit">
                         Log In
                     </button>
-<div class="flex items-center gap-md py-sm">
-<div class="h-[1px] flex-1 bg-outline-variant/30"></div>
-<span class="font-label-sm text-label-sm text-outline">OR</span>
-<div class="h-[1px] flex-1 bg-outline-variant/30"></div>
+<div class="flex items-center gap-md py-base">
+<div class="h-[1px] flex-1 bg-outline-variant/50"></div>
+<span class="font-label-md text-label-md text-outline uppercase tracking-widest">or</span>
+<div class="h-[1px] flex-1 bg-outline-variant/50"></div>
 </div>
-<button class="w-full h-14 bg-surface border border-primary text-primary font-label-lg text-label-lg rounded-xl flex items-center justify-center gap-sm active:bg-surface-container-low transition-colors" type="button">
-<span class="material-symbols-outlined text-[20px]" data-icon="fingerprint">fingerprint</span>
+<button class="w-full h-14 bg-surface-container-lowest border border-outline-variant text-on-surface-variant font-label-lg text-label-lg rounded-lg flex items-center justify-center gap-sm active:bg-surface-container-low transition-colors group" type="button">
+<span class="material-symbols-outlined text-[20px] text-primary group-hover:scale-110 transition-transform" data-icon="fingerprint">fingerprint</span>
                         Biometric Login
                     </button>
 </div>
 </form>
 </div>
 <!-- Footer / Redirect -->
-<footer class="flex justify-center items-center py-md">
+<footer class="flex flex-col items-center gap-lg">
 <p class="font-body-md text-body-md text-on-surface-variant">
                 Don't have an account? 
                 <a class="text-primary font-label-lg text-label-lg hover:underline ml-xs" href="#">Sign up</a>
 </p>
+<!-- Trust Indicator -->
+<div class="flex items-center gap-xs opacity-40">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+<span class="font-label-md text-[11px] uppercase tracking-[0.2em] font-bold">End-to-End Encrypted</span>
+</div>
 </footer>
 </main>
-<!-- Trust Indicators (Subtle) -->
-<div class="fixed bottom-margin-mobile left-0 right-0 flex justify-center opacity-40 pointer-events-none">
-<div class="flex items-center gap-xs">
-<span class="material-symbols-outlined text-[14px]">lock</span>
-<span class="font-label-sm text-label-sm uppercase tracking-widest">End-to-End Encrypted</span>
-</div>
-</div>
 <script>
         // Automatic Focus Shift for PIN inputs
         const pinInputs = document.querySelectorAll('.pin-input');
@@ -221,9 +205,7 @@
         // Micro-interaction for the Biometric Button
         const bioBtn = document.querySelector('button[type="button"]');
         bioBtn.addEventListener('click', () => {
-            bioBtn.classList.add('scale-95');
-            setTimeout(() => bioBtn.classList.remove('scale-95'), 100);
-            console.log('Requesting local_auth biometric prompt...');
+            console.log('Requesting biometric authentication...');
         });
     </script>
 </body></html>

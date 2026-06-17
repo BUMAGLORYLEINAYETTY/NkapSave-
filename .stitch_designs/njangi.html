@@ -3,10 +3,9 @@
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>NkapSave - Njangi Groups</title>
+<title>NkapSave - Njangi Dashboard</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
       tailwind.config = {
@@ -14,53 +13,53 @@
         theme: {
           extend: {
             "colors": {
-                    "tertiary-fixed": "#ffddb5",
-                    "inverse-surface": "#213145",
-                    "on-tertiary-fixed-variant": "#643f00",
-                    "surface-container-highest": "#d3e4fe",
-                    "outline-variant": "#bccabf",
-                    "primary-container": "#27a770",
-                    "primary": "#006c45",
-                    "surface-variant": "#d3e4fe",
-                    "secondary-fixed": "#e2e2e5",
-                    "on-primary-container": "#00341e",
+                    "on-secondary-fixed": "#002107",
+                    "surface-tint": "#2a6b2c",
+                    "surface-dim": "#d9dadb",
+                    "secondary-fixed-dim": "#90d792",
+                    "on-tertiary-fixed-variant": "#42493e",
+                    "surface-container-low": "#f3f4f5",
                     "on-secondary": "#ffffff",
-                    "error-container": "#ffdad6",
+                    "on-background": "#191c1d",
+                    "surface-container": "#edeeef",
+                    "tertiary-fixed-dim": "#c2c9bb",
+                    "inverse-primary": "#91d78a",
                     "error": "#ba1a1a",
-                    "primary-fixed": "#83f9bb",
-                    "tertiary-container": "#ca8400",
-                    "on-secondary-container": "#636467",
-                    "on-background": "#0b1c30",
-                    "on-tertiary-fixed": "#2a1800",
-                    "inverse-on-surface": "#eaf1ff",
-                    "surface-container-low": "#eff4ff",
-                    "on-primary-fixed": "#002112",
-                    "secondary": "#5d5e61",
-                    "inverse-primary": "#66dca0",
-                    "surface": "#f8f9ff",
-                    "on-secondary-fixed-variant": "#454749",
-                    "on-error-container": "#93000a",
-                    "surface-container-high": "#dce9ff",
-                    "surface-dim": "#cbdbf5",
-                    "on-primary-fixed-variant": "#005233",
-                    "outline": "#6d7a71",
-                    "on-surface-variant": "#3d4a41",
-                    "on-error": "#ffffff",
-                    "secondary-fixed-dim": "#c6c6c9",
-                    "tertiary-fixed-dim": "#ffb957",
-                    "surface-container-lowest": "#ffffff",
-                    "on-primary": "#ffffff",
-                    "on-surface": "#0b1c30",
-                    "surface-tint": "#006c45",
-                    "primary-fixed-dim": "#66dca0",
+                    "surface-container-high": "#e7e8e9",
+                    "background": "#f8f9fa",
+                    "inverse-surface": "#2e3132",
+                    "surface-container-highest": "#e1e3e4",
                     "on-tertiary": "#ffffff",
-                    "surface-bright": "#f8f9ff",
-                    "tertiary": "#835400",
-                    "secondary-container": "#e2e2e5",
-                    "background": "#f8f9ff",
-                    "on-tertiary-container": "#402700",
-                    "surface-container": "#e5eeff",
-                    "on-secondary-fixed": "#1a1c1e"
+                    "primary-container": "#1b5e20",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#191c1d",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed": "#acf4a4",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "on-surface-variant": "#41493e",
+                    "on-secondary-container": "#2e7238",
+                    "on-tertiary-fixed": "#171d14",
+                    "error-container": "#ffdad6",
+                    "outline": "#717a6d",
+                    "primary-fixed-dim": "#91d78a",
+                    "on-tertiary-container": "#c1c8ba",
+                    "on-primary-fixed": "#002203",
+                    "surface-bright": "#f8f9fa",
+                    "tertiary": "#363d33",
+                    "secondary-container": "#abf4ac",
+                    "tertiary-fixed": "#dee5d6",
+                    "on-primary-fixed-variant": "#0c5216",
+                    "surface-variant": "#e1e3e4",
+                    "outline-variant": "#c0c9bb",
+                    "primary": "#00450d",
+                    "on-primary-container": "#90d689",
+                    "tertiary-container": "#4d5449",
+                    "inverse-on-surface": "#f0f1f2",
+                    "secondary": "#286b33",
+                    "surface": "#f8f9fa",
+                    "secondary-fixed": "#abf4ac",
+                    "on-secondary-fixed-variant": "#07521d"
             },
             "borderRadius": {
                     "DEFAULT": "0.25rem",
@@ -69,52 +68,44 @@
                     "full": "9999px"
             },
             "spacing": {
-                    "md": "16px",
-                    "lg": "24px",
-                    "base": "4px",
-                    "margin-desktop": "32px",
+                    "xl": "64px",
+                    "md": "24px",
+                    "lg": "40px",
+                    "base": "8px",
+                    "margin": "20px",
                     "gutter": "16px",
-                    "margin-mobile": "16px",
-                    "xs": "4px",
-                    "sm": "8px",
-                    "xl": "32px"
+                    "sm": "12px",
+                    "xs": "4px"
             },
             "fontFamily": {
-                    "headline-lg": ["Hanken Grotesk"],
-                    "label-lg": ["Hanken Grotesk"],
-                    "display-lg": ["Hanken Grotesk"],
-                    "body-lg": ["Hanken Grotesk"],
-                    "headline-lg-mobile": ["Hanken Grotesk"],
                     "body-md": ["Hanken Grotesk"],
-                    "label-sm": ["Hanken Grotesk"],
-                    "headline-md": ["Hanken Grotesk"]
+                    "label-lg": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"],
+                    "label-md": ["Hanken Grotesk"],
+                    "headline-xl": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"]
             },
             "fontSize": {
-                    "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
-                    "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
-                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
-                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
-                    "headline-lg-mobile": ["22px", {"lineHeight": "28px", "fontWeight": "700"}],
-                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
-                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
-                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
             }
           },
         },
       }
     </script>
 <style>
-        body { font-family: 'Hanken Grotesk', sans-serif; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
+        body { font-family: 'Hanken Grotesk', sans-serif; -webkit-font-smoothing: antialiased; }
         .njangi-gradient {
-            background: linear-gradient(135deg, #006c45 0%, #27a770 100%);
+            background: linear-gradient(135deg, #00450d 0%, #1b5e20 100%);
         }
         .chat-bubble-received {
-            border-radius: 16px 16px 16px 4px;
+            border-radius: 4px 16px 16px 16px;
         }
         .chat-bubble-sent {
             border-radius: 16px 16px 4px 16px;
@@ -126,245 +117,275 @@
             background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #bccabf;
+            background: #c0c9bb;
             border-radius: 10px;
         }
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .safe-bottom { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
     </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
-  </head>
-<body class="bg-background text-on-background min-h-screen pb-20">
+</head>
+<body class="bg-background text-on-background min-h-screen">
 <!-- TopAppBar -->
-<header class="w-full sticky top-0 z-50 bg-surface dark:bg-surface-dim shadow-sm flex items-center justify-between px-margin-mobile py-sm w-full">
+<header class="fixed top-0 left-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/10">
+<div class="flex justify-between items-center w-full px-margin py-base max-w-7xl mx-auto">
 <div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
-<img alt="User Profile" class="w-full h-full object-cover" data-alt="A high-quality professional portrait of a young Cameroonian professional with a warm smile, wearing modern business-casual attire. The background is a soft-focus office setting with warm sunlight and lush indoor plants, creating a trustworthy and corporate-friendly fintech aesthetic with a primary color palette of deep greens and clean whites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOo8tmU19AN073zsG9DBMRdU_asT_cV8McMdetV8g741TrErJnF2cVOz2NzPjiGx-ElX1d1q2C2zFPTEawsiiz1qxRR19HFeri99VF6KwV9quHKpBJpSmPIUYztJGJGQI7XHap4xZWr8Fbv53HTxso117sinXv5GgNhMc6y6Hj7c_QRNbiFWDHBBVpemYC-3-hL_oaq42ENuPO8VWpiziE_gUF1rm36y1U96oXjxEkO5Ei73aXP8oDKOknnTGj4leSmUDCWIWswg"/>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOo8tmU19AN073zsG9DBMRdU_asT_cV8McMdetV8g741TrErJnF2cVOz2NzPjiGx-ElX1d1q2C2zFPTEawsiiz1qxRR19HFeri99VF6KwV9quHKpBJpSmPIUYztJGJGQI7XHap4xZWr8Fbv53HTxso117sinXv5GgNhMc6y6Hj7c_QRNbiFWDHBBVpemYC-3-hL_oaq42ENuPO8VWpiziE_gUF1rm36y1U96oXjxEkO5Ei73aXP8oDKOknnTGj4leSmUDCWIWswg"/>
 </div>
-<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold">NkapSave</h1>
+<h1 class="text-headline-md font-extrabold text-primary">NkapSave</h1>
 </div>
-<div class="flex items-center gap-4">
-<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors active:scale-95">search</button>
-<button class="material-symbols-outlined text-primary hover:bg-surface-container-low p-2 rounded-full transition-colors active:scale-95">fingerprint</button>
+<div class="flex items-center gap-2">
+<button class="material-symbols-outlined text-primary hover:bg-surface-container-low transition-colors p-2 rounded-full">notifications</button>
+<button class="material-symbols-outlined text-primary hover:bg-surface-container-low transition-colors p-2 rounded-full">search</button>
+</div>
 </div>
 </header>
-<main class="max-w-[800px] mx-auto px-margin-mobile pt-lg space-y-lg">
+<main class="max-w-7xl mx-auto px-margin pt-xl space-y-lg safe-bottom">
 <!-- Section Header -->
-<div class="flex justify-between items-end">
+<div class="flex justify-between items-end pt-8">
 <div>
-<p class="font-label-lg text-label-lg text-secondary uppercase tracking-wider">Tontine Savings</p>
-<h2 class="font-headline-lg text-headline-lg text-on-surface">Active Groups</h2>
+<p class="text-label-lg font-label-lg text-secondary uppercase tracking-widest text-[11px]">Tontine Savings</p>
+<h2 class="text-headline-lg font-headline-lg text-on-surface">Active Groups</h2>
 </div>
-<button class="bg-primary text-on-primary px-4 py-2 rounded-xl font-label-lg flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all shadow-sm">
-<span class="material-symbols-outlined text-[20px]">add</span>
-                Join New
-            </button>
+<button class="bg-primary text-on-primary px-6 py-3 rounded-lg font-label-lg flex items-center gap-2 hover:bg-primary-container transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+            Join Group
+        </button>
 </div>
-<!-- Main Njangi Card: Family Support -->
-<div class="njangi-gradient rounded-[24px] p-lg text-white shadow-lg relative overflow-hidden group">
-<!-- Decorative Element -->
-<div class="absolute -right-12 -top-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
-<div class="relative z-10 flex flex-col gap-6">
+<!-- Main Njangi Card -->
+<div class="njangi-gradient rounded-xl p-lg text-white shadow-lg relative overflow-hidden group">
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 24px 24px;"></div>
+<div class="relative z-10 space-y-8">
 <div class="flex justify-between items-start">
 <div>
-<div class="flex items-center gap-2 mb-1">
+<div class="flex items-center gap-2 mb-2">
 <span class="material-symbols-outlined text-[18px] text-primary-fixed">verified</span>
-<span class="font-label-sm text-label-sm text-primary-fixed uppercase tracking-widest">Njangi Priority</span>
+<span class="text-label-md font-bold text-primary-fixed uppercase tracking-wider">Priority Group</span>
 </div>
-<h3 class="font-headline-lg text-headline-lg">Family Support</h3>
+<h3 class="text-headline-xl font-headline-xl leading-tight">Family Support</h3>
 </div>
-<div class="bg-primary-fixed/20 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/20">
+<div class="bg-white/10 backdrop-blur-xl px-4 py-2 rounded-full flex items-center gap-2 border border-white/20">
 <span class="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></span>
-<span class="font-label-lg text-label-lg text-primary-fixed">Active Cycle</span>
+<span class="text-label-lg font-semibold text-white">Cycle 4/12</span>
 </div>
 </div>
 <!-- Progress Section -->
-<div class="space-y-3">
-<div class="flex justify-between items-center font-label-lg">
-<span>Cycle Progress</span>
-<span class="text-primary-fixed">10/12 Contributions</span>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<div class="space-y-1">
+<p class="text-label-md text-white/70 uppercase tracking-widest">Current Status</p>
+<p class="text-headline-md">10 of 12 Contributed</p>
 </div>
-<div class="h-3 w-full bg-black/20 rounded-full overflow-hidden">
-<div class="h-full bg-primary-fixed rounded-full w-[83%] shadow-[0_0_12px_rgba(131,249,187,0.4)]"></div>
+<p class="text-headline-lg text-primary-fixed">83%</p>
 </div>
-</div>
-<!-- Key Metrics Grid -->
-<div class="grid grid-cols-2 gap-4">
-<div class="bg-white/10 p-4 rounded-2xl border border-white/5">
-<p class="font-label-sm text-label-sm text-white/70 mb-1">Next Payout</p>
-<p class="font-headline-md text-headline-md">Oct 28, 2023</p>
-</div>
-<div class="bg-tertiary-container p-4 rounded-2xl border border-white/10 flex flex-col justify-center">
-<div class="flex items-center gap-2 mb-1">
-<span class="material-symbols-outlined text-[16px]">stars</span>
-<p class="font-label-sm text-label-sm text-on-tertiary-container font-bold uppercase">Your Turn</p>
-</div>
-<p class="font-headline-md text-headline-md text-on-tertiary-container">Collection Day</p>
+<div class="relative h-3 w-full bg-black/20 rounded-full overflow-hidden">
+<div class="h-full bg-primary-fixed rounded-full relative transition-all duration-1000 ease-out w-[83%]">
+<div class="absolute inset-0 shimmer opacity-30"></div>
 </div>
 </div>
 </div>
+<!-- Metrics Grid -->
+<div class="grid grid-cols-2 gap-gutter">
+<div class="bg-white/5 p-md rounded-lg border border-white/10 backdrop-blur-sm">
+<p class="text-label-md text-white/60 mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+                        Next Payout
+                    </p>
+<p class="text-headline-md">Oct 28, 2023</p>
 </div>
-<!-- Chat & NkapBot Section -->
-<div class="space-y-md">
-<h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<div class="bg-secondary-container p-md rounded-lg flex flex-col justify-center relative overflow-hidden border border-primary-fixed/20 shadow-inner">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-[18px] text-on-secondary-container">star</span>
+<p class="text-label-md text-on-secondary-container font-bold uppercase tracking-wider">Your Turn</p>
+</div>
+<p class="text-headline-md text-on-secondary-container">Collection Day</p>
+<div class="absolute -right-2 -bottom-2 opacity-10">
+<span class="material-symbols-outlined text-[64px] text-on-secondary-container">payments</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Group Discussion Section -->
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="text-headline-md text-on-surface flex items-center gap-3">
 <span class="material-symbols-outlined text-primary">forum</span>
                 Group Discussion
             </h3>
-<div class="bg-surface-container-lowest rounded-[24px] border border-outline-variant/30 shadow-sm flex flex-col h-[420px] overflow-hidden">
+<button class="text-primary font-label-lg hover:underline transition-all">View All Activity</button>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm flex flex-col h-[520px] overflow-hidden">
 <!-- Chat Header -->
-<div class="p-md border-b border-outline-variant/20 flex items-center justify-between bg-surface-container-low/50">
+<div class="px-md py-4 border-b border-outline-variant/20 flex items-center justify-between bg-surface-container-lowest">
 <div class="flex items-center gap-3">
-<div class="flex -space-x-3">
-<img alt="Member" class="w-8 h-8 rounded-full border-2 border-white" data-alt="A high-quality digital portrait of a professional African man in his late 30s, featuring warm lighting and a modern fintech aesthetic background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALgHM9uSyGc6uJQYY44rV8Ix2gKVm6aNuShKbLzO1aJzdajpDhei7qmSCbMpgqw3JEeJfchO7r34RJFUD2PgX22L1DnNJpPehnvbuP6KBGuRwCDNtH-My9On_0YlJn_JD24pecttQkCMxECobyR8yMtSYRypztuzXTBCyiUWTkI6GSEMlq03xjm2n4AwwIkb23BoGuVg46Vt1787dRsI4rEAYt-z4n5_Hga8XLFm1G5CeL_kuoopk0mCCdoc2JSzNFxHqa8DmRlg"/>
-<img alt="Member" class="w-8 h-8 rounded-full border-2 border-white" data-alt="A high-quality digital portrait of a smiling African woman in a professional setting, featuring soft focus office background and vibrant corporate colors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsrpCCAkGx41apbSsiES1DBuLhBet5rKsbIbNV4ZY-i9KYrDVK0n_mLwBEF1zV3K2Unr6HwtE0FnInpRvYt4v_ZEX8cg47w1By0QzyF_5t295gwl6xWrwhd8P6UzbFvCPLa1il2KRbJy2rsCWkiE610rYsCp9Rp7j-I6cicFvh8dMg5NDyzAyuroo3lBiTaQHmPtK_un5x4XJGSELNktk1T_LZ3qpS_8T5Yih18XAB4gSyFgo9Taapj5XtUJObAMVWGyezLvAn0Q"/>
-<div class="w-8 h-8 rounded-full bg-primary/10 border-2 border-white flex items-center justify-center text-[10px] font-bold text-primary">+8</div>
+<div class="flex -space-x-2">
+<img alt="Member" class="w-9 h-9 rounded-full border-2 border-surface shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALgHM9uSyGc6uJQYY44rV8Ix2gKVm6aNuShKbLzO1aJzdajpDhei7qmSCbMpgqw3JEeJfchO7r34RJFUD2PgX22L1DnNJpPehnvbuP6KBGuRwCDNtH-My9On_0YlJn_JD24pecttQkCMxECobyR8yMtSYRypztuzXTBCyiUWTkI6GSEMlq03xjm2n4AwwIkb23BoGuVg46Vt1787dRsI4rEAYt-z4n5_Hga8XLFm1G5CeL_kuoopk0mCCdoc2JSzNFxHqa8DmRlg"/>
+<img alt="Member" class="w-9 h-9 rounded-full border-2 border-surface shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsrpCCAkGx41apbSsiES1DBuLhBet5rKsbIbNV4ZY-i9KYrDVK0n_mLwBEF1zV3K2Unr6HwtE0FnInpRvYt4v_ZEX8cg47w1By0QzyF_5t295gwl6xWrwhd8P6UzbFvCPLa1il2KRbJy2rsCWkiE610rYsCp9Rp7j-I6cicFvh8dMg5NDyzAyuroo3lBiTaQHmPtK_un5x4XJGSELNktk1T_LZ3qpS_8T5Yih18XAB4gSyFgo9Taapj5XtUJObAMVWGyezLvAn0Q"/>
+<div class="w-9 h-9 rounded-full bg-primary-fixed/30 border-2 border-surface flex items-center justify-center text-xs font-bold text-primary">+8</div>
 </div>
-<span class="font-label-lg text-label-lg text-on-surface-variant">12 Members Online</span>
-</div>
-<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-1 rounded-full transition-colors">info</button>
-</div>
-<!-- Chat Messages Area -->
-<div class="flex-1 overflow-y-auto p-md space-y-lg custom-scrollbar">
-<!-- NkapBot Insight -->
-<div class="flex flex-col items-center gap-3 py-2">
-<div class="bg-primary-container/10 border border-primary/20 rounded-2xl p-lg max-w-[90%] relative">
-<div class="absolute -top-3 left-6 bg-primary text-on-primary px-3 py-0.5 rounded-full flex items-center gap-1.5">
-<span class="material-symbols-outlined text-[14px]">smart_toy</span>
-<span class="text-[10px] font-bold tracking-tighter uppercase">NkapBot Audit</span>
-</div>
-<div class="space-y-3">
-<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-                                    Hello Family! I've analyzed this month's health. <span class="text-primary font-bold">100% of members</span> have contributed on time. The group's reserve is currently at <span class="text-primary font-bold">450,000 XAF</span>.
-                                </p>
-<div class="grid grid-cols-2 gap-2">
-<div class="bg-white/50 p-2 rounded-xl border border-primary/10">
-<p class="text-[10px] text-secondary">Health Score</p>
-<p class="font-bold text-primary">Excellent</p>
-</div>
-<div class="bg-white/50 p-2 rounded-xl border border-primary/10">
-<p class="text-[10px] text-secondary">Risk Level</p>
-<p class="font-bold text-primary">Zero</p>
+<div>
+<span class="text-label-lg font-bold block">Family Support Chat</span>
+<span class="text-[11px] text-secondary flex items-center gap-1 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                            12 members active now
+                        </span>
 </div>
 </div>
+<button class="material-symbols-outlined text-outline p-2 rounded-full hover:bg-surface-container-low transition-all">more_vert</button>
+</div>
+<!-- Chat Content -->
+<div class="flex-1 overflow-y-auto p-md space-y-lg custom-scrollbar bg-surface-container-low/20">
+<!-- Audit Report -->
+<div class="flex flex-col items-center py-4">
+<div class="bg-white border border-outline-variant/30 rounded-lg p-md max-w-[95%] shadow-sm overflow-hidden relative">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex items-center gap-2 mb-4">
+<div class="bg-primary-container/10 p-1.5 rounded-md">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+</div>
+<span class="text-label-lg font-bold text-on-surface uppercase tracking-wider">NkapBot Audit Report</span>
+</div>
+<div class="space-y-4">
+<p class="text-body-md text-on-surface-variant leading-relaxed">
+                                Status: <span class="text-primary font-bold">Healthy Circle</span>. All members contributed on time this month. Total reserve: <span class="text-primary font-bold">450,000 XAF</span>.
+                            </p>
+<div class="flex gap-4">
+<div class="flex-1 bg-surface-container-low p-3 rounded flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">recommend</span>
+<div>
+<p class="text-[10px] text-secondary uppercase font-bold">Score</p>
+<p class="font-bold text-on-surface text-sm">Excellent</p>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-low p-3 rounded flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">security</span>
+<div>
+<p class="text-[10px] text-secondary uppercase font-bold">Risk</p>
+<p class="font-bold text-on-surface text-sm">Minimal</p>
 </div>
 </div>
 </div>
-<!-- Member Message -->
+</div>
+</div>
+</div>
+<!-- Messages -->
 <div class="flex gap-3">
-<img alt="Musa" class="w-8 h-8 rounded-full self-end" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQ2i2Srdzsvz1btuBwFWWg-Zsqh9CbY9tTVzmIHquVAaghTJ9ue65iohLt7DNbsUbaRlRDGjqRX-iR263gx5YesVwYjDQkIa1NAJ8qhGYHJs5UxcJySPLFa2EUHBlvLOwzPGShzIPhp3HfBczMPpenSF9SvheD9DyhtqqY0yH2UbPsT03uXSh4pQ6YhcbJV4U3JlJxt80FwDTdd90Hxc24pZpgILeijvVCOQn2sDmCrkb4K_yuu1OY5ObB0-r0IDkGauZiYLmICA"/>
-<div class="chat-bubble-received bg-surface-container-high p-md max-w-[75%]">
-<p class="text-[10px] font-bold text-primary mb-1">Musa B.</p>
-<p class="font-body-md text-body-md text-on-surface">Great news from the bot! I've just sent my contribution for the week. Looking forward to our payout celebration! 🥳</p>
-<p class="text-[10px] text-on-surface-variant text-right mt-1">09:42 AM</p>
+<img alt="Musa" class="w-8 h-8 rounded-full border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQ2i2Srdzsvz1btuBwFWWg-Zsqh9CbY9tTVzmIHquVAaghTJ9ue65iohLt7DNbsUbaRlRDGjqRX-iR263gx5YesVwYjDQkIa1NAJ8qhGYHJs5UxcJySPLFa2EUHBlvLOwzPGShzIPhp3HfBczMPpenSF9SvheD9DyhtqqY0yH2UbPsT03uXSh4pQ6YhcbJV4U3JlJxt80FwDTdd90Hxc24pZpgILeijvVCOQn2sDmCrkb4K_yuu1OY5ObB0-r0IDkGauZiYLmICA"/>
+<div class="chat-bubble-received bg-white p-md max-w-[85%] shadow-sm border border-outline-variant/10">
+<p class="text-label-md font-bold text-primary mb-1">Musa B.</p>
+<p class="text-body-md text-on-surface">Great news from the bot! I've just sent my contribution for the week. Looking forward to our payout celebration! 🥳</p>
+<p class="text-label-md text-outline text-right mt-2 font-normal">09:42 AM</p>
 </div>
 </div>
-<!-- User Message -->
 <div class="flex gap-3 justify-end">
-<div class="chat-bubble-sent bg-primary text-on-primary p-md max-w-[75%] shadow-sm">
-<p class="font-body-md text-body-md">Thanks Musa! I'm already planning for the next cycle. NkapBot, what's the projection for next month?</p>
-<p class="text-[10px] text-on-primary/70 text-right mt-1">09:45 AM</p>
+<div class="chat-bubble-sent njangi-gradient text-on-primary p-md max-w-[85%] shadow-md">
+<p class="text-body-md">Thanks Musa! I'm already planning for the next cycle. NkapBot, what's the projection for next month?</p>
+<p class="text-label-md text-on-primary/70 text-right mt-2 font-normal">09:45 AM</p>
 </div>
 </div>
 </div>
 <!-- Message Input -->
-<div class="p-md bg-surface-container-low border-t border-outline-variant/20">
+<div class="px-md py-4 bg-white border-t border-outline-variant/20">
 <div class="flex items-center gap-3">
-<button class="material-symbols-outlined text-primary">add_circle</button>
+<button class="material-symbols-outlined text-primary hover:bg-surface-container-low p-2 rounded-full transition-all">add</button>
 <div class="flex-1 relative">
-<input class="w-full bg-white border border-outline-variant/30 rounded-full px-4 py-2 text-body-md focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="Message Family Support..." type="text"/>
-<button class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-secondary hover:text-primary">sentiment_satisfied</button>
+<input class="w-full bg-surface-container-low border border-outline-variant/30 rounded-full px-5 py-3 text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none" placeholder="Message group..." type="text"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-xl">sentiment_satisfied</button>
 </div>
-<button class="w-10 h-10 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform">
-<span class="material-symbols-outlined">send</span>
+<button class="w-11 h-11 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all">
+<span class="material-symbols-outlined text-[22px]">send</span>
 </button>
 </div>
 </div>
 </div>
 </div>
-<!-- Other Groups Grid (Bento Style) -->
-<div class="space-y-md pb-10">
-<h3 class="font-headline-md text-headline-md text-on-surface">More Groups</h3>
-<div class="grid grid-cols-2 gap-md">
-<div class="bg-surface-container rounded-[20px] p-md space-y-3 border border-outline-variant/20 hover:shadow-md transition-all">
-<div class="w-10 h-10 rounded-full bg-tertiary-container/20 flex items-center justify-center text-tertiary">
-<span class="material-symbols-outlined">school</span>
+<!-- Other Portfolios -->
+<div class="space-y-6">
+<h3 class="text-headline-md text-on-surface">Other Portfolios</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Group Card 1 -->
+<div class="bg-surface-container-lowest rounded-lg p-md border border-outline-variant/30 hover:border-primary/50 transition-all group cursor-pointer shadow-sm flex items-center gap-4">
+<div class="w-14 h-14 rounded-lg bg-tertiary-container/10 flex items-center justify-center text-tertiary group-hover:bg-tertiary group-hover:text-on-tertiary transition-colors">
+<span class="material-symbols-outlined text-3xl">school</span>
 </div>
-<div>
-<p class="font-headline-md text-[16px] leading-tight text-on-surface">Education Fund</p>
-<p class="text-[11px] text-secondary">24 Members</p>
+<div class="flex-1 space-y-2">
+<div class="flex justify-between items-center">
+<p class="text-headline-md text-[18px] text-on-surface">Education Fund</p>
+<span class="text-label-md font-bold text-secondary">45%</span>
 </div>
-<div class="pt-2">
-<div class="h-1.5 w-full bg-outline-variant/30 rounded-full">
+<div class="h-1.5 w-full bg-outline-variant/20 rounded-full overflow-hidden">
 <div class="h-full bg-tertiary w-[45%] rounded-full"></div>
 </div>
+<p class="text-label-md text-secondary">24 Members • Weekly</p>
 </div>
 </div>
-<div class="bg-surface-container rounded-[20px] p-md space-y-3 border border-outline-variant/20 hover:shadow-md transition-all">
-<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-<span class="material-symbols-outlined">agriculture</span>
+<!-- Group Card 2 -->
+<div class="bg-surface-container-lowest rounded-lg p-md border border-outline-variant/30 hover:border-primary/50 transition-all group cursor-pointer shadow-sm flex items-center gap-4">
+<div class="w-14 h-14 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-3xl">agriculture</span>
 </div>
-<div>
-<p class="font-headline-md text-[16px] leading-tight text-on-surface">Agro-Business</p>
-<p class="text-[11px] text-secondary">8 Members</p>
+<div class="flex-1 space-y-2">
+<div class="flex justify-between items-center">
+<p class="text-headline-md text-[18px] text-on-surface">Agro-Business</p>
+<span class="text-label-md font-bold text-secondary">70%</span>
 </div>
-<div class="pt-2">
-<div class="h-1.5 w-full bg-outline-variant/30 rounded-full">
+<div class="h-1.5 w-full bg-outline-variant/20 rounded-full overflow-hidden">
 <div class="h-full bg-primary w-[70%] rounded-full"></div>
 </div>
+<p class="text-label-md text-secondary">8 Members • Monthly</p>
 </div>
 </div>
 </div>
 </div>
 </main>
 <!-- BottomNavBar -->
-<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-lowest dark:bg-inverse-surface shadow-[0_-4px_12px_rgba(0,0,0,0.04)] flex justify-around items-center h-16 px-md md:hidden">
-<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/20 px-4 py-1" href="#">
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface/95 backdrop-blur-md shadow-[0px_-4px_20px_rgba(27,94,32,0.1)] rounded-t-xl border-t border-outline-variant/10" style="padding-bottom: env(safe-area-inset-bottom);">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-lg transition-all" href="#">
 <span class="material-symbols-outlined">home</span>
-<span class="font-label-sm text-label-sm">Home</span>
+<span class="text-label-md">Home</span>
 </a>
-<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/20 px-4 py-1" href="#">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-lg transition-all" href="#">
 <span class="material-symbols-outlined">account_balance_wallet</span>
-<span class="font-label-sm text-label-sm">Expenses</span>
+<span class="text-label-md">Expenses</span>
 </a>
-<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1" href="#">
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-lg px-4 py-1 active:scale-95 transition-transform duration-200" href="#">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
-<span class="font-label-sm text-label-sm">Njangi</span>
+<span class="text-label-md font-bold">Njangi</span>
 </a>
-<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/20 px-4 py-1" href="#">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-lg transition-all" href="#">
 <span class="material-symbols-outlined">smart_toy</span>
-<span class="font-label-sm text-label-sm">NkapBot</span>
+<span class="text-label-md">NkapBot</span>
 </a>
 </nav>
-<!-- Success Feedback Overlay (Hidden by default) -->
-<div class="fixed top-24 left-1/2 -translate-x-1/2 z-[60] bg-primary text-on-primary px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 transition-all opacity-0 translate-y-[-20px] pointer-events-none" id="payout-notification">
-<span class="material-symbols-outlined text-[32px]">celebration</span>
+<!-- Payout Overlay -->
+<div class="fixed bottom-[90px] left-1/2 -translate-x-1/2 z-[60] bg-primary text-on-primary px-6 py-4 rounded-lg shadow-2xl flex items-center gap-4 transition-all opacity-0 translate-y-4 pointer-events-none border border-white/10 backdrop-blur-md" id="payout-notification">
+<div class="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center animate-bounce">
+<span class="material-symbols-outlined text-[28px] text-primary-fixed">celebration</span>
+</div>
 <div>
-<p class="font-bold">Next Payout: Yours!</p>
-<p class="text-sm opacity-90">October 28 • Est. 1,200,000 XAF</p>
+<p class="font-bold text-lg leading-tight">Next Payout: Yours!</p>
+<p class="text-label-md opacity-90">Oct 28 • Est. 1,200,000 XAF</p>
 </div>
 </div>
 <script>
-        // Simple micro-interaction for the "Your Turn" indicator
-        document.addEventListener('DOMContentLoaded', () => {
-            const notification = document.getElementById('payout-notification');
-            
-            // Show notification after 1.5s
-            setTimeout(() => {
-                notification.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
-                notification.classList.add('opacity-1', 'translate-y-0');
-            }, 1500);
-
-            // Hide after 6s
-            setTimeout(() => {
-                notification.classList.add('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
-            }, 6000);
-        });
-
-        // Toggle Dark Mode (Optional utility for demo)
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-        }
-    </script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const notification = document.getElementById('payout-notification');
+        setTimeout(() => {
+            notification.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+            notification.classList.add('opacity-1', 'translate-y-0');
+        }, 1200);
+        setTimeout(() => {
+            notification.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+        }, 8000);
+    });
+</script>
 </body></html>

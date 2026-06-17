@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/services/api_service.dart';
-import '../../../../core/services/fcm_service.dart';
 import '../../../../core/widgets/nkap_button.dart';
 import '../../../../core/widgets/nkap_text_field.dart';
 
@@ -46,16 +45,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     setState(() { _loading = true; _error = null; });
     try {
+      final email = _emailCtrl.text.trim();
       await ApiService.register(
         fullName: _nameCtrl.text.trim(),
-        email: _emailCtrl.text.trim(),
+        email: email,
         phone: _phoneCtrl.text.trim(),
         password: _passCtrl.text,
         dateOfBirth: _dob?.toIso8601String().substring(0, 10),
         city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
       );
-      await FcmService.instance.syncTokenWithBackend();
-      if (mounted) context.go('/home');
+      if (mounted) {
+        context.go('/email-pending', extra: email);
+      }
     } catch (e) {
       setState(() {
         _loading = false;

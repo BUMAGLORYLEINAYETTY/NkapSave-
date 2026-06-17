@@ -28,6 +28,8 @@ class User(Base):
     occupation      = Column(String(100), nullable=True)
     date_of_birth   = Column(String(20), nullable=True)
     city            = Column(String(100), nullable=True)
+    email_verified      = Column(Boolean, default=False, nullable=False)
+    email_verify_token  = Column(String(64), nullable=True)
     # NkapBot personalisation
     # Discrete bracket so the prompt builder can pick a midpoint without parsing
     # free text. See INCOME_BRACKET_MIDPOINTS in services/nkapbot_context_service.py.

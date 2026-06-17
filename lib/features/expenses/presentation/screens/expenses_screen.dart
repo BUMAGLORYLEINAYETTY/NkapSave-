@@ -1770,7 +1770,41 @@ class _AddTxnSheetState extends State<_AddTxnSheet> {
       if (!mounted) return;
       _applyOcr(res);
     } catch (e) {
-      if (mounted) _toast(context, _apiErr(e), error: true);
+      if (mounted) {
+        final msg = _apiErr(e);
+        // Tesseract-not-installed shows as 503 — display a clear dialog.
+        if (msg.toLowerCase().contains('not installed') ||
+            msg.toLowerCase().contains('tesseract')) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: AppColors.surface1,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: Text('Scanner not available',
+                  style: GoogleFonts.hankenGrotesk(
+                      fontWeight: FontWeight.w800, color: AppColors.text1)),
+              content: Text(
+                'The OCR engine (Tesseract) is not installed on the server.\n\n'
+                'To enable receipt scanning:\n'
+                '  brew install tesseract tesseract-lang\n\n'
+                'For now, please fill in your expense manually.',
+                style: GoogleFonts.hankenGrotesk(
+                    fontSize: 13, color: AppColors.text2, height: 1.5)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('Got it',
+                      style: GoogleFonts.hankenGrotesk(
+                          color: AppColors.primary, fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          );
+        } else {
+          _toast(context, msg, error: true);
+        }
+      }
     } finally {
       if (mounted) setState(() => _scanning = false);
     }
@@ -1794,10 +1828,103 @@ class _AddTxnSheetState extends State<_AddTxnSheet> {
       }
       _ocrConfidence = conf;
     });
-    _toast(context,
-        'Receipt scanned — ${(conf * 100).toStringAsFixed(0)}% confidence. '
-        'Verify before saving.');
+
+    // When OCR extracts both description and amount, show a confirmation
+    // sheet so the user can save in one tap without hunting for the button.
+    final hasAmount  = total != null && total > 0;
+    final hasVendor  = vendor != null && vendor.isNotEmpty;
+    if (hasAmount && hasVendor) {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          decoration: BoxDecoration(
+            color: AppColors.surface1,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(width: 36, height: 4,
+                decoration: BoxDecoration(
+                    color: AppColors.border2,
+                    borderRadius: BorderRadius.circular(99))),
+            const SizedBox(height: 16),
+            Row(children: [
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                    color: AppColors.primaryDim,
+                    borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.receipt_long_rounded,
+                    color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text('Receipt scanned',
+                    style: GoogleFonts.hankenGrotesk(
+                        fontWeight: FontWeight.w800, fontSize: 15,
+                        color: AppColors.text1)),
+                Text('${(conf * 100).toStringAsFixed(0)}% confidence',
+                    style: GoogleFonts.hankenGrotesk(
+                        fontSize: 11, color: AppColors.text3)),
+              ])),
+            ]),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                  color: AppColors.surface2,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border1)),
+              child: Column(children: [
+                _ocrRow('Description', vendor),
+                const SizedBox(height: 6),
+                _ocrRow('Amount',
+                    '${total.toStringAsFixed(0)} FCFA'),
+                if (iso != null && iso.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  _ocrRow('Date', iso),
+                ],
+              ]),
+            ),
+            const SizedBox(height: 16),
+            NkapButton(
+              label: 'Save Expense',
+              icon: Icons.check_rounded,
+              onTap: () { Navigator.pop(ctx); _submit(); },
+            ),
+            const SizedBox(height: 8),
+            Center(child: TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Edit before saving',
+                  style: GoogleFonts.hankenGrotesk(
+                      fontSize: 12, color: AppColors.text3)),
+            )),
+          ]),
+        ),
+      );
+    } else {
+      _toast(context,
+          'Receipt scanned — ${(conf * 100).toStringAsFixed(0)}% confidence. '
+          '${hasAmount ? '' : 'Enter an amount and '}tap Add to save.');
+    }
   }
+
+  Widget _ocrRow(String label, String? value) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: GoogleFonts.hankenGrotesk(
+                  fontSize: 12, color: AppColors.text3)),
+          Flexible(child: Text(value ?? '—',
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.hankenGrotesk(
+                  fontSize: 12, fontWeight: FontWeight.w700,
+                  color: AppColors.text1))),
+        ],
+      );
 
   Future<void> _listenForVoice() async {
     final transcript = await showModalBottomSheet<String>(

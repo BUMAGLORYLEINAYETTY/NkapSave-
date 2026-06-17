@@ -47,6 +47,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final bytes = await file.readAsBytes();
       await ApiService.uploadProfilePicture(bytes, file.name);
+      // Clear the Flutter image cache so the new photo is fetched fresh.
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -269,14 +272,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
           CircleAvatar(
             radius: 48,
             backgroundColor: AppColors.surface3,
-            backgroundImage: picUrl.isNotEmpty
-                ? NetworkImage(picUrl) : null,
             child: picUrl.isEmpty
                 ? Text(name[0].toUpperCase(),
                     style: GoogleFonts.hankenGrotesk(
                         fontSize: 36, fontWeight: FontWeight.w800,
                         color: AppColors.primary))
-                : null,
+                : ClipOval(
+                    child: Image.network(
+                      picUrl,
+                      width: 96, height: 96,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Center(
+                          child: Text(name[0].toUpperCase(),
+                              style: GoogleFonts.hankenGrotesk(
+                                  fontSize: 36, fontWeight: FontWeight.w800,
+                                  color: AppColors.primary))),
+                    ),
+                  ),
           ),
           Positioned(
             bottom: 0, right: 0,
@@ -624,13 +636,23 @@ class _MemberProfileViewState extends State<MemberProfileView> {
         CircleAvatar(
           radius: 56,
           backgroundColor: AppColors.surface3,
-          backgroundImage: picUrl.isNotEmpty ? NetworkImage(picUrl) : null,
           child: picUrl.isEmpty
               ? Text(name[0].toUpperCase(),
                   style: GoogleFonts.hankenGrotesk(
                       fontSize: 42, fontWeight: FontWeight.w800,
                       color: AppColors.primary))
-              : null,
+              : ClipOval(
+                  child: Image.network(
+                    picUrl,
+                    width: 112, height: 112,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(
+                        child: Text(name[0].toUpperCase(),
+                            style: GoogleFonts.hankenGrotesk(
+                                fontSize: 42, fontWeight: FontWeight.w800,
+                                color: AppColors.primary))),
+                  ),
+                ),
         ),
         const SizedBox(height: 14),
         Text(name, style: GoogleFonts.hankenGrotesk(

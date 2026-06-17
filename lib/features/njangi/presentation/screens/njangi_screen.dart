@@ -154,14 +154,7 @@ class _NjangiScreenState extends State<NjangiScreen>
                         icon:  Icon(Icons.refresh_rounded,
                             color: AppColors.text2, size: 20),
                         onPressed: _load),
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: _openProfile,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        child: _appBarAvatar(),
-                      ),
-                    ),
+                    const SizedBox(width: 4),
                   ],
                 ),
                 SliverToBoxAdapter(child: Column(children: [
@@ -187,26 +180,6 @@ class _NjangiScreenState extends State<NjangiScreen>
     );
   }
 
-  Widget _appBarAvatar() {
-    final url = _profileAvatarUrl;
-    return Container(
-      width: 34, height: 34,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: url.isEmpty
-            ? const LinearGradient(colors: [AppColors.primary, Color(0xFF006C45)])
-            : null,
-        color: url.isEmpty ? null : AppColors.surface3,
-        image: url.isEmpty ? null : DecorationImage(image: NetworkImage(url), fit: BoxFit.cover),
-        border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 1.5),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 10)],
-      ),
-      child: url.isEmpty
-          ? Center(child: Text(_profileInitial,
-              style: GoogleFonts.hankenGrotesk(color: AppColors.surface1, fontWeight: FontWeight.w800, fontSize: 14)))
-          : null,
-    );
-  }
 
   Widget _profileAvatarRing(double trust) {
     final url = _profileAvatarUrl;
@@ -252,7 +225,7 @@ class _NjangiScreenState extends State<NjangiScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft, end: Alignment.bottomRight,
-              colors: AppColors.heroNavyGradient),
+              colors: AppColors.heroBrandGradient),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: AppColors.primary.withOpacity(0.2)),
           ),
@@ -379,10 +352,10 @@ class _NjangiScreenState extends State<NjangiScreen>
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.add_rounded, size: 18, color: Color(0xFFFFFFFF)),
+              const Icon(Icons.add_circle_rounded, size: 18, color: Color(0xFFFFFFFF)),
               const SizedBox(width: 6),
               Text('Join New',
                   style: GoogleFonts.hankenGrotesk(
@@ -440,21 +413,17 @@ class _NjangiScreenState extends State<NjangiScreen>
         if (rest.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-            child: Text('More Groups', style: AppTextStyles.h3),
+            child: Text('Other Portfolios', style: AppTextStyles.h3),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: rest.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.92,
-              ),
-              itemBuilder: (_, i) => _buildMoreGroupCard(rest[i], i),
+            child: Column(
+              children: [
+                for (int i = 0; i < rest.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  _buildMoreGroupCard(rest[i], i),
+                ],
+              ],
             ),
           ),
         ],
@@ -469,8 +438,9 @@ class _NjangiScreenState extends State<NjangiScreen>
     final cycle = (g['current_cycle'] ?? 1) as int;
     final total = (g['total_cycles'] ?? 1) as int;
     final pct = ((g['progress_pct'] ?? 0) as num).toDouble() / 100;
-    final mc = (g['member_count'] ?? 0) as int;
+    final pctLabel = (pct.clamp(0.0, 1.0) * 100).round();
     final nextRecipient = (g['next_recipient'] ?? '').toString();
+    final nextPayout = (g['next_cycle_date'] ?? '').toString();
 
     return GestureDetector(
       onTap: () => setState(() => _selected = Map<String, dynamic>.from(g)),
@@ -488,26 +458,26 @@ class _NjangiScreenState extends State<NjangiScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  Icon(Icons.verified_rounded, size: 16, color: AppColors.heroFgMuted),
+                  Icon(Icons.verified_rounded, size: 16, color: AppColors.accent),
                   const SizedBox(width: 6),
-                  Text('NJANGI PRIORITY',
+                  Text('PRIORITY GROUP',
                       style: GoogleFonts.hankenGrotesk(
-                          fontSize: 10.5, fontWeight: FontWeight.w700,
-                          color: AppColors.heroFgMuted, letterSpacing: 1.4)),
+                          fontSize: 10.5, fontWeight: FontWeight.w800,
+                          color: AppColors.accent, letterSpacing: 1.4)),
                 ]),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text((g['name'] ?? '').toString(),
                     maxLines: 2, overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.hankenGrotesk(
-                        fontSize: 20, fontWeight: FontWeight.w800,
+                        fontSize: 24, fontWeight: FontWeight.w800,
                         color: AppColors.heroFg, height: 1.15)),
               ],
             )),
             const SizedBox(width: 10),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.heroFg.withOpacity(0.15),
+                color: AppColors.heroFg.withOpacity(0.10),
                 borderRadius: BorderRadius.circular(99),
                 border: Border.all(color: AppColors.heroFg.withOpacity(0.2)),
               ),
@@ -515,34 +485,45 @@ class _NjangiScreenState extends State<NjangiScreen>
                 Container(
                   width: 7, height: 7,
                   decoration: BoxDecoration(
-                      shape: BoxShape.circle, color: AppColors.heroFg),
+                      shape: BoxShape.circle, color: AppColors.accent),
                 ),
                 const SizedBox(width: 6),
-                Text('Active Cycle',
+                Text('Cycle $cycle/$total',
                     style: GoogleFonts.hankenGrotesk(
-                        fontSize: 11, fontWeight: FontWeight.w700,
+                        fontSize: 12, fontWeight: FontWeight.w700,
                         color: AppColors.heroFg)),
               ]),
             ),
           ]),
-          const SizedBox(height: 20),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('Cycle Progress',
+          const SizedBox(height: 24),
+          // ── Progress section ──
+          Row(crossAxisAlignment: CrossAxisAlignment.end, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('CURRENT STATUS',
+                    style: GoogleFonts.hankenGrotesk(
+                        fontSize: 10, fontWeight: FontWeight.w700,
+                        color: AppColors.heroFgDim, letterSpacing: 1.4)),
+                const SizedBox(height: 4),
+                Text('$cycle of $total Contributed',
+                    style: GoogleFonts.hankenGrotesk(
+                        fontSize: 16, fontWeight: FontWeight.w800,
+                        color: AppColors.heroFg)),
+              ],
+            )),
+            Text('$pctLabel%',
                 style: GoogleFonts.hankenGrotesk(
-                    fontSize: 12.5, fontWeight: FontWeight.w600,
-                    color: AppColors.heroFg)),
-            Text('$cycle/$total Contributions',
-                style: GoogleFonts.hankenGrotesk(
-                    fontSize: 12.5, fontWeight: FontWeight.w700,
-                    color: AppColors.heroFg)),
+                    fontSize: 26, fontWeight: FontWeight.w800,
+                    color: AppColors.accent)),
           ]),
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: LinearProgressIndicator(
               value: pct.clamp(0.0, 1.0), minHeight: 8,
-              backgroundColor: Colors.black.withOpacity(0.18),
-              valueColor: AlwaysStoppedAnimation(AppColors.heroFg),
+              backgroundColor: Colors.black.withOpacity(0.22),
+              valueColor: AlwaysStoppedAnimation(AppColors.accent),
             ),
           ),
           const SizedBox(height: 16),
@@ -554,19 +535,25 @@ class _NjangiScreenState extends State<NjangiScreen>
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.heroFg.withOpacity(0.10),
+                  color: AppColors.heroFg.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.heroFg.withOpacity(0.08)),
+                  border: Border.all(color: AppColors.heroFg.withOpacity(0.10)),
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Members',
+                  Row(children: [
+                    Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.heroFgMuted),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text('NEXT PAYOUT',
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.hankenGrotesk(
+                            fontSize: 10, fontWeight: FontWeight.w700,
+                            color: AppColors.heroFgMuted, letterSpacing: 1.0))),
+                  ]),
+                  const SizedBox(height: 8),
+                  Text(nextPayout.isEmpty ? '—' : nextPayout,
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.hankenGrotesk(
-                          fontSize: 10.5, fontWeight: FontWeight.w600,
-                          color: AppColors.heroFgMuted)),
-                  const SizedBox(height: 4),
-                  Text('$mc',
-                      style: GoogleFonts.hankenGrotesk(
-                          fontSize: 16, fontWeight: FontWeight.w800,
+                          fontSize: 15, fontWeight: FontWeight.w800,
                           color: AppColors.heroFg)),
                 ]),
               ),
@@ -576,33 +563,41 @@ class _NjangiScreenState extends State<NjangiScreen>
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: isMyTurn ? AppColors.accent : AppColors.heroFg.withOpacity(0.10),
+                  color: isMyTurn ? AppColors.accent : AppColors.heroFg.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                       color: isMyTurn
                           ? AppColors.accent
-                          : AppColors.heroFg.withOpacity(0.08)),
+                          : AppColors.heroFg.withOpacity(0.10)),
                 ),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  if (isMyTurn) Row(children: [
-                    Icon(Icons.stars_rounded, size: 14, color: AppColors.charcoal),
-                    const SizedBox(width: 4),
-                    Text('YOUR TURN',
+                child: Stack(children: [
+                  if (isMyTurn) Positioned(
+                    right: -6, bottom: -10,
+                    child: Icon(Icons.payments_rounded,
+                        size: 56, color: AppColors.charcoal.withOpacity(0.10)),
+                  ),
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Icon(isMyTurn ? Icons.star_rounded : Icons.person_pin_circle_rounded,
+                          size: 14,
+                          color: isMyTurn ? AppColors.charcoal : AppColors.heroFgMuted),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text(isMyTurn ? 'YOUR TURN' : 'NEXT RECIPIENT',
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.hankenGrotesk(
+                              fontSize: 10, fontWeight: FontWeight.w800,
+                              color: isMyTurn ? AppColors.charcoal : AppColors.heroFgMuted,
+                              letterSpacing: 1.0))),
+                    ]),
+                    const SizedBox(height: 8),
+                    Text(isMyTurn
+                            ? 'Collection Day'
+                            : (nextRecipient.isEmpty ? '—' : nextRecipient),
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.hankenGrotesk(
-                            fontSize: 10, fontWeight: FontWeight.w800,
-                            color: AppColors.charcoal, letterSpacing: 0.6)),
-                  ]) else Text('Next Recipient',
-                      style: GoogleFonts.hankenGrotesk(
-                          fontSize: 10.5, fontWeight: FontWeight.w600,
-                          color: AppColors.heroFgMuted)),
-                  const SizedBox(height: 4),
-                  Text(isMyTurn
-                          ? 'Collection Day'
-                          : (nextRecipient.isEmpty ? '—' : nextRecipient),
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.hankenGrotesk(
-                          fontSize: 14, fontWeight: FontWeight.w800,
-                          color: isMyTurn ? AppColors.charcoal : AppColors.heroFg)),
+                            fontSize: 15, fontWeight: FontWeight.w800,
+                            color: isMyTurn ? AppColors.charcoal : AppColors.heroFg)),
+                  ]),
                 ]),
               ),
             ),
@@ -612,51 +607,68 @@ class _NjangiScreenState extends State<NjangiScreen>
     );
   }
 
-  /// Compact "More Groups" bento card — circular tinted icon, member count
-  /// and a slim progress bar.
+  /// "Other Portfolios" row card — square tinted icon badge on the left,
+  /// title + progress percentage, a slim progress bar, and a member
+  /// count/frequency caption. Mirrors the Stitch group-card layout.
   Widget _buildMoreGroupCard(Map g, int index) {
     final pct = ((g['progress_pct'] ?? 0) as num).toDouble() / 100;
+    final pctLabel = (pct.clamp(0.0, 1.0) * 100).round();
     final mc = (g['member_count'] ?? 0) as int;
     final isMyTurn = (g['is_my_turn'] ?? false) as bool;
     final tint = _memberColors[index % _memberColors.length];
     final icon = _groupIcons[index % _groupIcons.length];
+    final freq = (g['frequency'] ?? '').toString();
 
     return GestureDetector(
       onTap: () => setState(() => _selected = Map<String, dynamic>.from(g)),
       child: NkapCard(
         radius: 20,
         padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(
-                  shape: BoxShape.circle, color: tint.withOpacity(0.15)),
-              child: Icon(icon, size: 20, color: tint),
-            ),
-            const Spacer(),
-            Text((g['name'] ?? '').toString(),
-                maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.hankenGrotesk(
-                    fontSize: 14, fontWeight: FontWeight.w800,
-                    height: 1.2, color: AppColors.text1)),
-            const SizedBox(height: 2),
-            Text('$mc Member${mc != 1 ? "s" : ""}',
-                style: GoogleFonts.hankenGrotesk(
-                    fontSize: 11, color: AppColors.text3)),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(99),
-              child: LinearProgressIndicator(
-                value: pct.clamp(0.0, 1.0), minHeight: 5,
-                backgroundColor: AppColors.border1,
-                valueColor: AlwaysStoppedAnimation(
-                    isMyTurn ? AppColors.accent : AppColors.primary),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          Container(
+            width: 52, height: 52,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                color: tint.withOpacity(0.15)),
+            child: Icon(icon, size: 26, color: tint),
+          ),
+          const SizedBox(width: 14),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Expanded(child: Text((g['name'] ?? '').toString(),
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.hankenGrotesk(
+                        fontSize: 15, fontWeight: FontWeight.w800,
+                        height: 1.2, color: AppColors.text1))),
+                const SizedBox(width: 8),
+                Text('$pctLabel%',
+                    style: GoogleFonts.hankenGrotesk(
+                        fontSize: 12, fontWeight: FontWeight.w800,
+                        color: AppColors.text2)),
+              ]),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(
+                  value: pct.clamp(0.0, 1.0), minHeight: 5,
+                  backgroundColor: AppColors.border1,
+                  valueColor: AlwaysStoppedAnimation(
+                      isMyTurn ? AppColors.accent : AppColors.primary),
+                ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 6),
+              Text(
+                  freq.isEmpty
+                      ? '$mc Member${mc != 1 ? "s" : ""}'
+                      : '$mc Member${mc != 1 ? "s" : ""} · $freq',
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.hankenGrotesk(
+                      fontSize: 11.5, color: AppColors.text3)),
+            ],
+          )),
+        ]),
       ),
     );
   }
@@ -1679,6 +1691,7 @@ class _GroupDetailState extends State<_GroupDetail> {
     String? operator;
     final phoneCtrl = TextEditingController();
     String? phoneError;
+    bool submitting = false;
     final trust = ((g['my_trust_score'] ?? 100) as num).toDouble();
     final cycle = (g['current_cycle'] ?? 1) as int;
     final total = (g['total_cycles'] ?? 1) as int;
@@ -1892,9 +1905,13 @@ class _GroupDetailState extends State<_GroupDetail> {
                 
                 // ── Confirm Button ──
                 NkapButton(
-                  label: 'Confirm Payment · ${_fmt(amount)} FCFA',
-                  icon: Icons.check_rounded,
-                  onTap: () {
+                  label: submitting
+                      ? 'Sending request…'
+                      : 'Send MoMo Request · ${_fmt(amount)} FCFA',
+                  icon: submitting
+                      ? Icons.hourglass_top_rounded
+                      : Icons.send_rounded,
+                  onTap: submitting ? null : () async {
                     final digits = phoneCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
                     if (digits.length != 9) {
                       setSheet(() => phoneError = 'Enter 9 digits');
@@ -1906,12 +1923,35 @@ class _GroupDetailState extends State<_GroupDetail> {
                     }
                     final detected = _detectOperator(digits);
                     if (detected != null && detected != operator) {
-                      setSheet(() => phoneError = 
+                      setSheet(() => phoneError =
                           'This is a $detected number, not $operator');
                       return;
                     }
-                    Navigator.pop(context);
-                    _showUSSDFlow(g, amount, operator!, digits, cycle);
+                    setSheet(() { submitting = true; phoneError = null; });
+                    try {
+                      final start = await ApiService.contributeNjangi(
+                          g['id'], phone: digits, provider: operator!);
+                      final cid = start['contribution_id'] as String?;
+                      if (!context.mounted) return;
+                      Navigator.pop(context);
+                      _showWaitingDialog(
+                          g, cid ?? '', amount, operator!, digits, cycle);
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      setSheet(() { submitting = false; });
+                      final msg = _pretty(e,
+                          'Payment request failed. Check your phone number and try again.');
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(msg,
+                            style: GoogleFonts.hankenGrotesk(
+                                fontWeight: FontWeight.w600)),
+                        backgroundColor: AppColors.danger,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        duration: const Duration(seconds: 6),
+                      ));
+                    }
                   },
                 ),
                 const SizedBox(height: 8),
@@ -1930,60 +1970,65 @@ class _GroupDetailState extends State<_GroupDetail> {
     );
   }
 
-  void _showUSSDFlow(Map<String, dynamic> g, double amount,
-      String operator, String phone, int cycle) {
+  /// Poll for the outcome of an already-initiated contribution. The backend
+  /// only marks paid once Campay confirms the user approved the USSD prompt.
+  Future<Map<String, dynamic>> _pollFromId(
+      String groupId, String contributionId) async {
+    try {
+      for (var i = 0; i < 20; i++) {
+        await Future.delayed(const Duration(seconds: 3));
+        final res = await ApiService.pollNjangiContribution(groupId, contributionId);
+        if (res['status'] != 'pending') return res;
+      }
+      return {'status': 'pending'};
+    } catch (e) {
+      return {'status': 'error', 'reason': _pretty(e, 'Status check failed')};
+    }
+  }
+
+  /// Show the "waiting for phone approval" dialog. This is shown AFTER the
+  /// backend confirms it sent the USSD/push to the user's phone — not before.
+  void _showWaitingDialog(Map<String, dynamic> g, String contributionId,
+      double amount, String operator, String phone, int cycle) {
     showDialog(context: context, barrierDismissible: false,
-        builder: (ctx) => _USSDDialog(
+        builder: (ctx) => _ApprovalWaitDialog(
           group: g, amount: amount, operator: operator,
           phone: phone, cycle: cycle,
-          onSuccess: () async {
+          onWait: () => _pollFromId(g['id'], contributionId),
+          onSuccess: (result) {
             Navigator.pop(ctx);
-            // Generate transaction reference
-            final txRef = 'NKP' + DateTime.now().millisecondsSinceEpoch
-                .toString().substring(7);
-            try {
-              await ApiService.contributeNjangi(g['id']);
-              if (mounted) {
-                showDialog(context: context, barrierDismissible: false,
-                    builder: (ctx2) => _SuccessDialog(
-                      amount: amount,
-                      groupName: g['name'] ?? '',
-                      operator: operator,
-                      phone: phone,
-                      txRef: txRef,
-                      onClose: () { 
-                        Navigator.pop(ctx2); 
-                        widget.onRefresh();
-                        // Show post-payment notification
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Row(children: [
-                            const Icon(Icons.check_circle_rounded,
-                                color: Color(0xFFFFFFFF), size: 18),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(
-                              'Payment confirmed! Trust score +2',
-                              style: GoogleFonts.hankenGrotesk(
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFFFFFFFF)))),
-                          ]),
-                          backgroundColor: AppColors.primary,
-                          behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 4),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ));
-                      },
+            final txRef = 'NKP' +
+                DateTime.now().millisecondsSinceEpoch.toString().substring(7);
+            showDialog(context: context, barrierDismissible: false,
+                builder: (ctx2) => _SuccessDialog(
+                  amount: amount,
+                  groupName: g['name'] ?? '',
+                  operator: operator,
+                  phone: phone,
+                  txRef: txRef,
+                  onClose: () {
+                    Navigator.pop(ctx2);
+                    widget.onRefresh();
+                    final payoutMsg = result['payout_msg'] as String?;
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Row(children: [
+                        const Icon(Icons.check_circle_rounded,
+                            color: Color(0xFFFFFFFF), size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(
+                          payoutMsg ?? 'Payment confirmed! Trust score +2',
+                          style: GoogleFonts.hankenGrotesk(
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFFFFFFF)))),
+                      ]),
+                      backgroundColor: AppColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 4),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ));
-              }
-            } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Payment failed - try again',
-                      style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w600)),
-                  backgroundColor: AppColors.danger,
+                  },
                 ));
-              }
-            }
           },
         ));
   }
@@ -3478,32 +3523,28 @@ class _OperatorCard extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════
 // USSD DIALOG (4-step: Connecting → USSD → PIN → Processing)
 // ═══════════════════════════════════════════════════════════════
-class _USSDDialog extends StatefulWidget {
+/// Shown after the backend confirms it sent the MoMo collect request to the
+/// user's phone. Polls until Campay settles the transaction.
+class _ApprovalWaitDialog extends StatefulWidget {
   final Map<String, dynamic> group;
   final double amount;
   final String operator, phone;
   final int cycle;
-  final VoidCallback onSuccess;
-  const _USSDDialog({
+  final Future<Map<String, dynamic>> Function() onWait;
+  final void Function(Map<String, dynamic> result) onSuccess;
+  const _ApprovalWaitDialog({
     required this.group, required this.amount,
     required this.operator, required this.phone,
     this.cycle = 1,
+    required this.onWait,
     required this.onSuccess,
   });
-  @override State<_USSDDialog> createState() => _USSDDialogState();
+  @override State<_ApprovalWaitDialog> createState() => _ApprovalWaitDialogState();
 }
 
-class _USSDDialogState extends State<_USSDDialog> {
-  int _step = 0; // 0:dialing, 1:enter PIN, 2:processing
-  final _pinCtrl = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _step = 1);
-    });
-  }
+class _ApprovalWaitDialogState extends State<_ApprovalWaitDialog> {
+  bool _failed = false;
+  String? _failMessage;
 
   Color get _brandColor =>
       widget.operator == 'MTN' ? _Brand.mtnYellow : _Brand.orangeRed;
@@ -3511,123 +3552,105 @@ class _USSDDialogState extends State<_USSDDialog> {
       widget.operator == 'MTN' ? _Brand.mtnDark : Colors.white;
 
   @override
+  void initState() {
+    super.initState();
+    _poll();
+  }
+
+  void _poll() {
+    widget.onWait().then((result) {
+      if (!mounted) return;
+      switch (result['status']) {
+        case 'successful':
+          widget.onSuccess(result);
+          break;
+        case 'failed':
+          setState(() {
+            _failed = true;
+            _failMessage = (result['reason'] as String?) ?? 'Payment was declined.';
+          });
+          break;
+        case 'error':
+          setState(() {
+            _failed = true;
+            _failMessage = (result['reason'] as String?) ?? 'Payment failed — try again.';
+          });
+          break;
+        default: // timeout after 60s of polling
+          setState(() {
+            _failed = true;
+            _failMessage = 'No confirmation received in 60 s. '
+                'If you approved on your phone, check this group again in a moment.';
+          });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppColors.surface1,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(padding: const EdgeInsets.all(24),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          // Brand header
           Container(
             width: 64, height: 64,
             decoration: BoxDecoration(
               color: _brandColor,
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [BoxShadow(
-                  color: _brandColor.withOpacity(0.4), blurRadius: 16)],
+              boxShadow: [BoxShadow(color: _brandColor.withOpacity(0.4), blurRadius: 16)],
             ),
             child: Center(child: Text(widget.operator,
                 style: GoogleFonts.hankenGrotesk(
                     fontSize: widget.operator == 'Orange' ? 13 : 18,
-                    fontWeight: FontWeight.w900,
-                    color: _brandText))),
+                    fontWeight: FontWeight.w900, color: _brandText))),
           ),
           const SizedBox(height: 16),
-          if (_step == 0) ...[
-            Text('Connecting to ${widget.operator}...',
+          if (!_failed) ...[
+            Text('Waiting for your approval…',
                 style: GoogleFonts.hankenGrotesk(
                     fontSize: 14, fontWeight: FontWeight.w700,
                     color: AppColors.text1)),
-            const SizedBox(height: 8),
-            Text('+237 ${widget.phone}',
-                style: GoogleFonts.hankenGrotesk(
-                    fontSize: 12, color: AppColors.text3)),
-            const SizedBox(height: 20),
-             SizedBox(height: 4,
-                child: LinearProgressIndicator(
-                    backgroundColor: AppColors.border1,
-                    valueColor: AlwaysStoppedAnimation(
-                        AppColors.primary))),
-          ] else if (_step == 1) ...[
-            // USSD prompt simulation
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border2),
-              ),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text('${widget.operator} Mobile Money',
-                    style: GoogleFonts.hankenGrotesk(
-                        fontSize: 11, color: _brandColor,
-                        fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Text('Pay ${_fmt(widget.amount)} FCFA',
-                    style: GoogleFonts.hankenGrotesk(
-                        color: Colors.white, fontSize: 14,
-                        fontWeight: FontWeight.w600)),
-                Text('To: NkapSave Njangi (${widget.group['name']})',
-                    style: GoogleFonts.hankenGrotesk(
-                        color: Colors.white70, fontSize: 11)),
-                const SizedBox(height: 10),
-                Text('Enter PIN to confirm:',
-                    style: GoogleFonts.hankenGrotesk(
-                        color: Colors.white70, fontSize: 11)),
-              ]),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _pinCtrl,
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              maxLength: 4,
+            const SizedBox(height: 6),
+            Text(
+              'A ${widget.operator} MoMo prompt was sent to\n+237 ${widget.phone}',
               textAlign: TextAlign.center,
-              style: GoogleFonts.hankenGrotesk(
-                  fontSize: 24, fontWeight: FontWeight.w800,
-                  letterSpacing: 12, color: AppColors.text1),
-              decoration: InputDecoration(
-                hintText: '••••',
-                hintStyle: GoogleFonts.hankenGrotesk(
-                    color: AppColors.border2,
-                    fontSize: 24, letterSpacing: 12),
-                counterText: '',
-              ),
+              style: GoogleFonts.hankenGrotesk(fontSize: 12, color: AppColors.text3),
             ),
-            const SizedBox(height: 12),
-            NkapButton(
-              label: 'Confirm Payment',
-              icon: Icons.lock_rounded,
-              onTap: () {
-                if (_pinCtrl.text.length != 4) return;
-                setState(() => _step = 2);
-                Future.delayed(const Duration(seconds: 2), () {
-                  if (mounted) widget.onSuccess();
-                });
-              },
-            ),
-          ] else ...[
-            Text('Processing...', style: GoogleFonts.hankenGrotesk(
-                fontSize: 14, fontWeight: FontWeight.w700,
-                color: AppColors.text1)),
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
+            Text('${_fmt(widget.amount)} FCFA',
+                style: GoogleFonts.hankenGrotesk(
+                    fontSize: 22, fontWeight: FontWeight.w800,
+                    color: AppColors.primary)),
+            const SizedBox(height: 16),
             const SizedBox(
-                width: 40, height: 40,
+                width: 36, height: 36,
                 child: CircularProgressIndicator(
                     color: AppColors.primary, strokeWidth: 3)),
-          ],
-          if (_step == 1) Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: GoogleFonts.hankenGrotesk(
-                  color: AppColors.text3, fontSize: 12)),
+            const SizedBox(height: 12),
+            Text('Approve with your PIN on your phone',
+                style: GoogleFonts.hankenGrotesk(
+                    fontSize: 11, color: AppColors.text3,
+                    fontStyle: FontStyle.italic)),
+          ] else ...[
+            Icon(Icons.error_outline_rounded, size: 40, color: AppColors.danger),
+            const SizedBox(height: 12),
+            Text('Payment not completed',
+                style: GoogleFonts.hankenGrotesk(
+                    fontSize: 14, fontWeight: FontWeight.w700,
+                    color: AppColors.text1)),
+            const SizedBox(height: 6),
+            Text(_failMessage ?? 'Something went wrong.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.hankenGrotesk(
+                    fontSize: 12, color: AppColors.text3)),
+            const SizedBox(height: 16),
+            NkapButton(
+              label: 'Close',
+              icon: Icons.close_rounded,
+              onTap: () => Navigator.pop(context),
             ),
-          ),
+          ],
         ]),
       ),
     );

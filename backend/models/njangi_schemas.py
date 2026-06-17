@@ -12,6 +12,10 @@ class CreateGroupRequest(BaseModel):
 class JoinGroupRequest(BaseModel):
     invite_code: str
 
+class ContributeRequest(BaseModel):
+    phone:    str   # local 9-digit MSISDN, e.g. "670000000"
+    provider: str   # "MTN" | "Orange" — display/logging only; Campay routes by number
+
 class MemberOut(BaseModel):
     id:              str
     position:        int
