@@ -30,3 +30,7 @@ anthropic>=0.34.0
 #   lexical fallback (lower quality). For fully-offline local embeddings,
 #   uncomment the line below (pulls in PyTorch — large):
 # sentence-transformers>=2.7
+
+# Testing
+pytest>=8.0
+pytest-asyncio>=0.23

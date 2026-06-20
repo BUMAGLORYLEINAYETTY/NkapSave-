@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from core.database import get_db
 from core.security import get_current_user
 from models.user import User
@@ -10,13 +10,14 @@ from models.savings_schemas import (
     CreateGoalRequest, AddFundsRequest,
     AutoSaveUpdateRequest, GoalOut, SavingsResponse,
 )
-from models.momo import AutoSavePlan, MoMoConnection, MoMoTransaction
+import uuid
+from models.momo import AutoSavePlan, MoMoConnection, MoMoTransaction, MoMoTransfer
 from models.momo_schemas import (
     CreateAutoSavePlanRequest, UpdateAutoSavePlanRequest,
     AutoSavePlanOut, AutoSavePlanDetail, MoMoTransactionOut,
     SavingsInsightsOut, UpcomingRunOut, ActivityItemOut, AllocationItemOut,
 )
-from services import auto_save_service
+from services import auto_save_service, momo_provider
 
 router = APIRouter(prefix="/savings", tags=["Savings"])
 
@@ -76,7 +77,7 @@ async def _load_user_plan(db: AsyncSession, user_id: str, goal_id: str) -> AutoS
 
 
 def _month_start(now: datetime | None = None) -> datetime:
-    now = now or datetime.utcnow()
+    now = now or datetime.now(timezone.utc)
     return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
@@ -191,7 +192,7 @@ async def get_savings_insights(
     a few indexed scans and the freshness is worth it.
     """
     user_id = current_user["user_id"]
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     month_start = _month_start(now)
     prev_month_start = _month_start(month_start - timedelta(days=1))
 
@@ -201,7 +202,7 @@ async def get_savings_insights(
         db, user_id, prev_month_start, month_start,
     )
     lifetime_saved = await _sum_successful_between(
-        db, user_id, datetime(1970, 1, 1),
+        db, user_id, datetime(1970, 1, 1, tzinfo=timezone.utc),
     )
 
     if prev_month_saved > 0:
@@ -318,6 +319,7 @@ async def create_goal(
         target=body.target,
         note=body.note,
         deadline=body.deadline,
+        is_locked=False,
     )
     db.add(goal)
     await db.flush()
@@ -364,32 +366,62 @@ async def withdraw(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    res  = await db.execute(
+    user_id = current_user["user_id"]
+    res = await db.execute(
         select(SavingsGoal).where(
             SavingsGoal.id      == goal_id,
-            SavingsGoal.user_id == current_user["user_id"],
+            SavingsGoal.user_id == user_id,
         ))
     goal = res.scalar_one_or_none()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
- 
-    # 10% early withdrawal penalty
+
+    conn_res = await db.execute(
+        select(MoMoConnection).where(
+            MoMoConnection.user_id == user_id,
+            MoMoConnection.verified == True,  # noqa: E712
+        ))
+    conn = conn_res.scalar_one_or_none()
+    if not conn:
+        raise HTTPException(
+            status_code=400,
+            detail="Link a verified MoMo wallet before withdrawing.",
+        )
+
     penalty = goal.current * 0.10
     payout  = goal.current - penalty
- 
-    u_res = await db.execute(
-        select(User).where(User.id == current_user["user_id"]))
-    user        = u_res.scalar_one()
-    user.total_balance += payout
-    goal.current        = 0
-    goal.is_completed   = False
-    goal.is_locked      = True
+
+    external_id = uuid.uuid4().hex[:32]
+    try:
+        reference = momo_provider.transfer(
+            phone=conn.phone,
+            amount=int(payout),
+            external_id=external_id,
+            description="NkapSave savings withdrawal",
+        )
+    except (momo_provider.MoMoApiError, momo_provider.MoMoNotConfigured) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    goal.current      = 0
+    goal.is_completed = False
+    goal.is_locked    = True
+    db.add(MoMoTransfer(
+        user_id      = user_id,
+        reference_id = reference,
+        external_id  = external_id,
+        amount       = payout,
+        phone        = conn.phone,
+        status       = "SUCCESSFUL",
+        purpose      = "savings_withdrawal",
+        related_id   = str(goal.id),
+    ))
     await db.flush()
- 
+
     return {
-        "message": "Early withdrawal processed",
-        "payout":  payout,
-        "penalty": penalty,
+        "message":        "Withdrawal processed — funds sent to your MoMo wallet.",
+        "payout":         payout,
+        "penalty":        penalty,
+        "momo_reference": reference,
     }
  
 @router.delete("/goals/{goal_id}", status_code=200)
@@ -418,6 +450,20 @@ async def delete_goal(
     await db.flush()
     return {"message": "Goal deleted"}
  
+@router.patch("/goals/{goal_id}/lock", status_code=200)
+async def toggle_goal_lock(
+    goal_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    goal = await _load_user_goal(db, current_user["user_id"], goal_id)
+    if goal.is_completed:
+        raise HTTPException(status_code=400, detail="Completed goals cannot be locked.")
+    goal.is_locked = not goal.is_locked
+    await db.flush()
+    return {"is_locked": goal.is_locked}
+
+
 @router.patch("/auto-save", status_code=200)
 async def update_auto_save(
     body: AutoSaveUpdateRequest,

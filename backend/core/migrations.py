@@ -162,6 +162,103 @@ async def add_email_verification_columns(engine: AsyncEngine) -> None:
             )
 
 
+async def add_momo_goal_id_column(engine: AsyncEngine) -> None:
+    """Add `momo_transactions.goal_id` if missing.
+
+    Older databases pre-date this FK column. Without it the savings/insights
+    endpoint crashes with a ProgrammingError (no CORS headers reach the client,
+    which shows as a misleading CORS block in the browser).
+    """
+    async with engine.begin() as conn:
+        await conn.execute(text(
+            "ALTER TABLE momo_transactions ADD COLUMN IF NOT EXISTS "
+            "goal_id UUID REFERENCES savings_goals(id) ON DELETE SET NULL"
+        ))
+
+
+async def add_auto_save_plan_columns(engine: AsyncEngine) -> None:
+    """Add columns to `auto_save_plans` that were added after initial creation.
+
+    `create_all` never alters existing tables, so these must be applied
+    explicitly. Missing columns cause a Postgres ProgrammingError (500) on any
+    query that SELECTs the plan, which strips CORS headers and appears as a
+    CORS block in the browser.
+    """
+    async with engine.begin() as conn:
+        for sql in [
+            "ALTER TABLE auto_save_plans ADD COLUMN IF NOT EXISTS "
+            "consecutive_failures INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE auto_save_plans ADD COLUMN IF NOT EXISTS "
+            "last_milestone_notified INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE auto_save_plans ADD COLUMN IF NOT EXISTS "
+            "reminder_enabled BOOLEAN NOT NULL DEFAULT TRUE",
+            "ALTER TABLE auto_save_plans ADD COLUMN IF NOT EXISTS "
+            "last_reminder_for_run_at TIMESTAMPTZ",
+            "ALTER TABLE auto_save_plans ADD COLUMN IF NOT EXISTS "
+            "last_run_at TIMESTAMPTZ",
+        ]:
+            await conn.execute(text(sql))
+
+
+async def unlock_existing_savings_goals(engine: AsyncEngine) -> None:
+    """Unlock all non-completed savings goals.
+
+    Goals were originally created with is_locked=True as the default, which
+    made every new goal appear locked even though the user had not opted into
+    commitment mode. The default is now False; this backfill clears the old
+    True rows so existing goals are no longer stuck as 'Locked'.
+    """
+    async with engine.begin() as conn:
+        result = await conn.execute(text(
+            "UPDATE savings_goals SET is_locked = FALSE "
+            "WHERE is_locked = TRUE AND is_completed = FALSE"
+        ))
+        if result.rowcount:
+            logger.info(
+                "Unlocked %s savings goals (migrated from forced-locked default)",
+                result.rowcount,
+            )
+
+
+async def add_njangi_payout_transfer_columns(engine: AsyncEngine) -> None:
+    """Add payout_status, transfer_reference, recipient_phone to njangi_payouts.
+
+    Existing rows keep payout_status='completed' — they were paid before
+    real Campay transfers existed and are considered settled."""
+    async with engine.begin() as conn:
+        for sql in [
+            "ALTER TABLE njangi_payouts ADD COLUMN IF NOT EXISTS "
+            "payout_status VARCHAR(30) NOT NULL DEFAULT 'completed'",
+            "ALTER TABLE njangi_payouts ADD COLUMN IF NOT EXISTS "
+            "transfer_reference VARCHAR(64)",
+            "ALTER TABLE njangi_payouts ADD COLUMN IF NOT EXISTS "
+            "recipient_phone VARCHAR(20)",
+        ]:
+            await conn.execute(text(sql))
+
+
+async def add_momo_transfers_table(engine: AsyncEngine) -> None:
+    """Create the momo_transfers table for outbound Campay transfer audit log."""
+    async with engine.begin() as conn:
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS momo_transfers (
+                id UUID PRIMARY KEY,
+                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                reference_id VARCHAR(64) UNIQUE NOT NULL,
+                external_id VARCHAR(64) NOT NULL,
+                amount FLOAT NOT NULL,
+                currency VARCHAR(8) NOT NULL DEFAULT 'XAF',
+                phone VARCHAR(20) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'SUCCESSFUL',
+                reason TEXT,
+                purpose VARCHAR(30) NOT NULL,
+                related_id VARCHAR(64),
+                initiated_at TIMESTAMPTZ DEFAULT now(),
+                completed_at TIMESTAMPTZ
+            )
+        """))
+
+
 async def run_dev_migrations(engine: AsyncEngine) -> None:
     """Run every idempotent dev migration in order."""
     try:
@@ -170,6 +267,11 @@ async def run_dev_migrations(engine: AsyncEngine) -> None:
         await add_njangi_contribution_payment_columns(engine)
         await backfill_njangi_creator_admin(engine)
         await add_email_verification_columns(engine)
+        await add_momo_goal_id_column(engine)
+        await add_auto_save_plan_columns(engine)
+        await unlock_existing_savings_goals(engine)
+        await add_njangi_payout_transfer_columns(engine)
+        await add_momo_transfers_table(engine)
     except Exception as e:  # pragma: no cover — dev only
         logger.exception("Dev migration failed: %s", e)
         raise

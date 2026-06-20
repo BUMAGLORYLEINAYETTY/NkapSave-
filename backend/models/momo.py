@@ -91,3 +91,30 @@ class MoMoTransaction(Base):
     reason        = Column(Text, nullable=True)
     initiated_at  = Column(DateTime(timezone=True), server_default=func.now())
     completed_at  = Column(DateTime(timezone=True), nullable=True)
+
+
+class MoMoTransfer(Base):
+    """Audit log of every outbound Campay transfer (money sent TO a user).
+
+    Symmetric counterpart to MoMoTransaction (inbound collects).
+    `purpose` distinguishes savings withdrawals from njangi payouts.
+    """
+    __tablename__ = "momo_transfers"
+
+    id            = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id       = Column(UUID(as_uuid=True),
+                           ForeignKey("users.id", ondelete="CASCADE"),
+                           nullable=False, index=True)
+    reference_id  = Column(String(64), unique=True, nullable=False, index=True)
+    external_id   = Column(String(64), nullable=False)
+    amount        = Column(Float, nullable=False)
+    currency      = Column(String(8), nullable=False, default="XAF")
+    phone         = Column(String(20), nullable=False)
+    status        = Column(String(20), nullable=False, default="SUCCESSFUL")
+    reason        = Column(Text, nullable=True)
+    # "savings_withdrawal" | "njangi_payout"
+    purpose       = Column(String(30), nullable=False)
+    # goal_id for savings_withdrawal; payout_id (str) for njangi_payout
+    related_id    = Column(String(64), nullable=True)
+    initiated_at  = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at  = Column(DateTime(timezone=True), nullable=True)

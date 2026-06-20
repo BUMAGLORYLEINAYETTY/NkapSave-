@@ -128,4 +128,9 @@ class NjangiPayout(Base):
     net_amount    = Column(Float, nullable=False)
     escrow_amount = Column(Float, default=0.0)
     trust_score   = Column(Float, nullable=False)
+    # Outbound transfer tracking. payout_status defaults to 'completed' so
+    # existing rows (paid before real transfers existed) remain valid.
+    payout_status      = Column(String(30), nullable=False, default="completed")
+    transfer_reference = Column(String(64), nullable=True)
+    recipient_phone    = Column(String(20), nullable=True)
     created_at    = Column(DateTime(timezone=True), server_default=func.now())

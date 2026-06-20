@@ -129,11 +129,23 @@ def _auth_headers() -> dict:
 
 
 def _msisdn(phone: str) -> str:
-    """Strip non-digits (and leading '+'). Campay expects e.g. 237670000000."""
+    """Normalise to the full MSISDN Campay expects, e.g. 237670000000.
+
+    Accepts:
+      237670000000  (already fully qualified — pass through)
+      +237670000000 (E.164 — strip '+')
+      670000000     (local 9-digit — prepend country code)
+      0670000000    (local with leading 0 — strip 0, prepend country code)
+    """
     digits = "".join(c for c in (phone or "") if c.isdigit())
     if not digits:
         raise ValueError("Empty phone number")
-    return digits
+    cc = settings.DEFAULT_COUNTRY_CODE  # "237"
+    if digits.startswith(cc):
+        return digits  # already fully qualified
+    if digits.startswith("0"):
+        digits = digits[1:]  # strip leading trunk prefix
+    return cc + digits
 
 
 def request_to_pay(
@@ -172,6 +184,43 @@ def request_to_pay(
     logger.info(
         "Campay collect accepted ref=%s amount=%s %s phone=%s operator=%s",
         reference, amount, currency, _msisdn(phone), data.get("operator", "?"),
+    )
+    return reference
+
+
+def transfer(
+    *, phone: str, amount: int, external_id: str, description: str,
+) -> str:
+    """Initiate a Campay outbound transfer to a subscriber.
+
+    Sends `amount` XAF from the merchant wallet to `phone`. Returns the
+    Campay reference string. Raises MoMoApiError on rejection.
+    """
+    _require_creds()
+    url = f"{_base_url()}/transfer/"
+    body = {
+        "amount":             str(int(amount)),
+        "to":                 _msisdn(phone),
+        "description":        description[:160],
+        "external_reference": external_id,
+    }
+    try:
+        resp = httpx.post(url, headers=_auth_headers(), json=body, timeout=30.0)
+    except httpx.HTTPError as e:
+        raise MoMoApiError(f"Network error on transfer: {e}") from e
+
+    if resp.status_code >= 400:
+        raise MoMoApiError(
+            f"Campay transfer rejected: {resp.status_code} {resp.text[:200]}"
+        )
+
+    data = resp.json()
+    reference = data.get("reference")
+    if not reference:
+        raise MoMoApiError(f"Campay transfer response missing 'reference': {data}")
+    logger.info(
+        "Campay transfer accepted ref=%s amount=%s phone=%s",
+        reference, amount, _msisdn(phone),
     )
     return reference
 

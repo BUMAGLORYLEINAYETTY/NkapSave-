@@ -1,8 +1,9 @@
+import uuid
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-import random, string
+import random, string, logging
 from datetime import datetime, timedelta, timezone
 from core.database import get_db
 from core.security import get_current_user
@@ -14,7 +15,10 @@ from models.njangi_schemas import (
     CreateGroupRequest, JoinGroupRequest, ContributeRequest,
     GroupOut, MemberOut, NjangiResponse,
 )
+from models.momo import MoMoConnection, MoMoTransfer
 from services import momo_provider
+
+logger = logging.getLogger("nkapsave.njangi")
 
 router = APIRouter(prefix="/njangi", tags=["Njangi"])
 
@@ -201,10 +205,13 @@ async def join_group(
 
 async def _settle_contribution(db: AsyncSession, group: NjangiGroup,
                                 member: NjangiMember, user: User) -> dict:
-    """Apply the effects of a confirmed (SUCCESSFUL) MoMo contribution:
-    mark the member paid, bump trust, deduct the ledger balance, and run
-    the "all paid → payout" cycle-advance logic. Shared by the old
-    synchronous path's bookkeeping and the new payment-confirmation poll."""
+    """Apply the effects of a confirmed (SUCCESSFUL) MoMo contribution.
+
+    Marks the member paid, bumps trust, and — if all members have now paid —
+    creates a NjangiPayout with payout_status='pending_momo'. The caller is
+    responsible for attempting the actual Campay transfer AFTER committing,
+    so no DB lock is held during the HTTP call.
+    """
     member.has_paid    = True
     member.trust_score = min(member.trust_score + 2, 100)
     user.total_balance -= group.contribution
@@ -214,38 +221,109 @@ async def _settle_contribution(db: AsyncSession, group: NjangiGroup,
     all_members = all_members_res.scalars().all()
     all_paid = all(m.has_paid for m in all_members)
 
-    payout_msg = None
-    if all_paid:
-        recipient = next(
-            (m for m in all_members if m.position == group.current_cycle), None)
-        if recipient:
-            pool   = group.contribution * len(all_members)
-            net    = (recipient.trust_score / 100) * pool
-            escrow = pool - net
-            r_res  = await db.execute(
-                select(User).where(User.id == recipient.user_id))
-            r_user = r_res.scalar_one()
-            r_user.total_balance    += net
-            recipient.payout_received = True
-            db.add(NjangiPayout(
-                group_id=group.id,
-                recipient_id=recipient.id,
-                cycle=group.current_cycle,
-                gross_amount=pool,
-                net_amount=net,
-                escrow_amount=escrow,
-                trust_score=recipient.trust_score,
-            ))
-            payout_msg = f"Payout of {net:,.0f} FCFA sent!"
+    if not all_paid:
+        return {"all_paid": False, "payout_id": None, "net": None, "recipient_user_id": None}
 
-        for m in all_members:
-            m.has_paid = False
-        group.current_cycle += 1
-        group.cycle_start_date = datetime.now(timezone.utc)
-        if group.current_cycle > group.total_cycles:
-            group.status = GroupStatus.COMPLETED
+    recipient = next(
+        (m for m in all_members if m.position == group.current_cycle), None)
+    if not recipient:
+        return {"all_paid": True, "payout_id": None, "net": None, "recipient_user_id": None}
 
-    return {"all_paid": all_paid, "payout_msg": payout_msg}
+    pool   = group.contribution * len(all_members)
+    net    = (recipient.trust_score / 100) * pool
+    escrow = pool - net
+
+    r_res  = await db.execute(
+        select(User).where(User.id == recipient.user_id))
+    r_user = r_res.scalar_one()
+
+    payout = NjangiPayout(
+        group_id      = group.id,
+        recipient_id  = recipient.id,
+        cycle         = group.current_cycle,
+        gross_amount  = pool,
+        net_amount    = net,
+        escrow_amount = escrow,
+        trust_score   = recipient.trust_score,
+        payout_status = "pending_momo",
+    )
+    db.add(payout)
+    recipient.payout_received = True
+
+    for m in all_members:
+        m.has_paid = False
+    group.current_cycle += 1
+    group.cycle_start_date = datetime.now(timezone.utc)
+    if group.current_cycle > group.total_cycles:
+        group.status = GroupStatus.COMPLETED
+
+    await db.flush()
+
+    return {
+        "all_paid":          True,
+        "payout_id":         str(payout.id),
+        "net":               net,
+        "recipient_user_id": str(r_user.id),
+    }
+
+
+async def _attempt_njangi_transfer(db: AsyncSession, settle: dict) -> str | None:
+    """Attempt the Campay outbound transfer for a pending_momo NjangiPayout.
+
+    Called OUTSIDE any open DB transaction (caller must have committed first).
+    Updates payout status in a fresh flush. Returns a user-visible message.
+    """
+    payout_res = await db.execute(
+        select(NjangiPayout).where(NjangiPayout.id == settle["payout_id"]))
+    payout = payout_res.scalar_one_or_none()
+    if not payout:
+        return None
+
+    member_res = await db.execute(
+        select(NjangiMember).where(NjangiMember.id == payout.recipient_id))
+    recipient_member = member_res.scalar_one_or_none()
+    if not recipient_member:
+        return f"Payout of {payout.net_amount:,.0f} FCFA pending — recipient not found."
+
+    conn_res = await db.execute(
+        select(MoMoConnection).where(
+            MoMoConnection.user_id == recipient_member.user_id,
+            MoMoConnection.verified == True,  # noqa: E712
+        ))
+    conn = conn_res.scalar_one_or_none()
+    if not conn:
+        return (
+            f"Payout of {payout.net_amount:,.0f} FCFA pending — "
+            "recipient must link a verified MoMo wallet."
+        )
+
+    external_id = uuid.uuid4().hex[:32]
+    try:
+        reference = momo_provider.transfer(
+            phone=conn.phone,
+            amount=int(payout.net_amount),
+            external_id=external_id,
+            description=f"Njangi payout cycle {payout.cycle}",
+        )
+    except (momo_provider.MoMoApiError, momo_provider.MoMoNotConfigured) as e:
+        logger.error("njangi payout transfer failed payout=%s: %s", payout.id, e)
+        return f"Payout of {payout.net_amount:,.0f} FCFA pending — transfer failed: {e}"
+
+    payout.payout_status      = "completed"
+    payout.transfer_reference = reference
+    payout.recipient_phone    = conn.phone
+    db.add(MoMoTransfer(
+        user_id      = str(recipient_member.user_id),
+        reference_id = reference,
+        external_id  = external_id,
+        amount       = payout.net_amount,
+        phone        = conn.phone,
+        status       = "SUCCESSFUL",
+        purpose      = "njangi_payout",
+        related_id   = str(payout.id),
+    ))
+    await db.flush()
+    return f"Payout of {payout.net_amount:,.0f} FCFA sent!"
 
 
 @router.post("/groups/{group_id}/contribute", status_code=200)
@@ -369,9 +447,16 @@ async def poll_contribution(
         user = u_res.scalar_one()
 
         contrib.status = "successful"
-        result = await _settle_contribution(db, group, member, user)
-        await db.flush()
-        return {"status": "successful", **result}
+        settle = await _settle_contribution(db, group, member, user)
+        # Phase 1: commit DB (mark paid, create pending_momo payout) before
+        # making the Campay HTTP call — never hold a DB lock across network I/O.
+        await db.commit()
+
+        payout_msg = None
+        if settle["all_paid"] and settle["payout_id"]:
+            payout_msg = await _attempt_njangi_transfer(db, settle)
+
+        return {"status": "successful", "all_paid": settle["all_paid"], "payout_msg": payout_msg}
 
     if momo_status == "FAILED":
         contrib.status = "failed"
@@ -380,6 +465,84 @@ async def poll_contribution(
                 "all_paid": False, "payout_msg": None}
 
     return {"status": "pending", "all_paid": False, "payout_msg": None}
+
+
+@router.post("/groups/{group_id}/payout/retry", status_code=200)
+async def retry_njangi_payout(
+    group_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retry a pending_momo Njangi payout. Admin (group creator) only.
+
+    Use this when the automatic transfer failed because the recipient had
+    no linked MoMo wallet or Campay was temporarily unavailable.
+    """
+    g_res = await db.execute(
+        select(NjangiGroup).where(NjangiGroup.id == group_id))
+    group = g_res.scalar_one_or_none()
+    if not group or str(group.creator_id) != current_user["user_id"]:
+        raise HTTPException(status_code=403, detail="Admin only")
+
+    p_res = await db.execute(
+        select(NjangiPayout).where(
+            NjangiPayout.group_id     == group_id,
+            NjangiPayout.payout_status == "pending_momo",
+        ).order_by(NjangiPayout.created_at.desc()))
+    payout = p_res.scalar_one_or_none()
+    if not payout:
+        raise HTTPException(status_code=404, detail="No pending payout for this group")
+
+    member_res = await db.execute(
+        select(NjangiMember).where(NjangiMember.id == payout.recipient_id))
+    recipient_member = member_res.scalar_one_or_none()
+    if not recipient_member:
+        raise HTTPException(status_code=404, detail="Recipient member not found")
+
+    conn_res = await db.execute(
+        select(MoMoConnection).where(
+            MoMoConnection.user_id == recipient_member.user_id,
+            MoMoConnection.verified == True,  # noqa: E712
+        ))
+    conn = conn_res.scalar_one_or_none()
+    if not conn:
+        raise HTTPException(
+            status_code=400,
+            detail="Recipient has not linked a verified MoMo wallet.",
+        )
+
+    external_id = uuid.uuid4().hex[:32]
+    try:
+        reference = momo_provider.transfer(
+            phone=conn.phone,
+            amount=int(payout.net_amount),
+            external_id=external_id,
+            description=f"Njangi payout cycle {payout.cycle}",
+        )
+    except (momo_provider.MoMoApiError, momo_provider.MoMoNotConfigured) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    payout.payout_status      = "completed"
+    payout.transfer_reference = reference
+    payout.recipient_phone    = conn.phone
+    db.add(MoMoTransfer(
+        user_id      = str(recipient_member.user_id),
+        reference_id = reference,
+        external_id  = external_id,
+        amount       = payout.net_amount,
+        phone        = conn.phone,
+        status       = "SUCCESSFUL",
+        purpose      = "njangi_payout",
+        related_id   = str(payout.id),
+    ))
+    await db.flush()
+
+    return {
+        "status":         "completed",
+        "momo_reference": reference,
+        "amount":         payout.net_amount,
+        "message":        f"Payout of {payout.net_amount:,.0f} FCFA sent successfully.",
+    }
 
 
 class _UpdateMaxRequest(BaseModel):
