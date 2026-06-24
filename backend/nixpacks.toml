@@ -1,6 +1,7 @@
 [phases.setup]
+# python312: avoids mise attestation errors on Railway
 # tesseract: receipt OCR   libheif: HEIC/HEIF photo support
-nixPkgs = ["tesseract", "libheif"]
+nixPkgs = ["python312", "tesseract", "libheif"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
