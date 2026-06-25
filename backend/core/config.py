@@ -9,6 +9,14 @@ class Settings(BaseSettings):
     # ── Core ─────────────────────────────────────────────────
     DATABASE_URL: str
     SECRET_KEY: str
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def coerce_async_db_url(cls, v: str) -> str:
+        """Railway injects postgresql:// — asyncpg needs postgresql+asyncpg://."""
+        if v.startswith("postgresql://") or v.startswith("postgres://"):
+            return v.replace("://", "+asyncpg://", 1)
+        return v
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
@@ -25,6 +33,12 @@ class Settings(BaseSettings):
     # and `_require_verified` short-circuits so njangi money endpoints
     # don't 403 users who can't submit ID anyway.
     KYC_ENABLED: bool = False
+
+    # Demo / presentation mode. When true, MoMo API calls are simulated
+    # (no real Fapshi requests) so auto-save and Njangi payments succeed
+    # instantly without real credentials or USSD prompts.
+    # NEVER enable in production.
+    DEMO_MODE: bool = False
 
     # ── CORS ─────────────────────────────────────────────────
     # Comma-separated list of allowed origins. Empty in prod = locked down.
@@ -54,15 +68,15 @@ class Settings(BaseSettings):
     # Hour (UTC) on the 1st of each month when statements go out.
     STATEMENT_HOUR_UTC: int      = 6
 
-    # ── Campay (Cameroon-native MoMo aggregator) ─────────────
-    # Sandbox: demo.campay.net  |  Production: www.campay.net
-    # Sign up at https://www.campay.net to get app_username + app_password.
-    CAMPAY_ENV: str = "sandbox"
-    CAMPAY_USERNAME: Optional[str] = None
-    CAMPAY_PASSWORD: Optional[str] = None
-    # Optional public URL Campay will hit for webhook callbacks. We still
-    # poll get_status so this is just a nice-to-have for faster settlement.
-    CAMPAY_WEBHOOK_HOST: Optional[str] = None
+    # ── Fapshi (Cameroon-native MoMo aggregator) ─────────────
+    # Sandbox: sandboxapi.fapshi.com  |  Production: live.fapshi.com
+    # Sign up at https://fapshi.com → Dashboard → API Credentials.
+    # Each service has its own apiuser + apikey pair.
+    FAPSHI_ENV: str = "sandbox"
+    FAPSHI_COLLECTION_USER: Optional[str] = None  # apiuser for pay-in
+    FAPSHI_COLLECTION_KEY:  Optional[str] = None  # apikey  for pay-in
+    FAPSHI_PAYOUT_USER:     Optional[str] = None  # apiuser for pay-out
+    FAPSHI_PAYOUT_KEY:      Optional[str] = None  # apikey  for pay-out
 
     # Default phone country code for normalization (Cameroon = 237).
     DEFAULT_COUNTRY_CODE: str = "237"
@@ -72,7 +86,7 @@ class Settings(BaseSettings):
     # a graceful fallback message — context retrieval still works.
     ANTHROPIC_API_KEY: Optional[str] = None
     # Model + token budget. Override per environment if you want cheaper/faster.
-    ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
+    ANTHROPIC_MODEL: str = "claude-sonnet-4-6"
     ANTHROPIC_MAX_TOKENS: int = 1000
 
     # ── NkapBot semantic RAG (embeddings) ────────────────────
