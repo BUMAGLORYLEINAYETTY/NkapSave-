@@ -111,6 +111,11 @@ class Settings(BaseSettings):
     # Embedding-provider API keys (Voyage is Anthropic's recommended partner).
     VOYAGE_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
+
+    # ── Resend (transactional email — preferred over SMTP on Railway) ─────────
+    # Sign up at https://resend.com — free tier: 3,000 emails/month.
+    # When set, Resend is used instead of SMTP (Railway blocks port 587).
+    RESEND_API_KEY: Optional[str] = None
     # Retrieval tuning: how many passages to inject and the minimum cosine
     # similarity a passage must clear to be considered relevant.
     RAG_TOP_K: int = 4
