@@ -48,8 +48,9 @@ async def _send_via_resend(
     *, to: str, subject: str, html: str,
     attachments: Iterable[EmailAttachment] = (),
 ) -> None:
+    resend_from = settings.RESEND_FROM or "NkapSave <onboarding@resend.dev>"
     payload: dict = {
-        "from": settings.SMTP_FROM or f"NkapSave <onboarding@resend.dev>",
+        "from": resend_from,
         "to":   [to],
         "subject": subject,
         "html": html,
