@@ -1,257 +1,341 @@
-"""Campay-backed mobile-money provider.
+"""Fapshi-backed mobile-money provider.
 
-We talk to Campay (https://www.campay.net) because it aggregates MTN Mobile
-Money and Orange Money behind a single Cameroon-native API:
-  * Native XAF (no sandbox-EUR quirk)
+Fapshi (https://fapshi.com) aggregates MTN Mobile Money and Orange Money for
+Cameroon behind a simple REST API:
+  * Native XAF
   * One integration for both operators
-  * The user authenticates with their PIN inside the operator's flow — we
-    never see, store, or transmit the PIN.
+  * Users approve USSD prompts from their operator — we never see the PIN.
 
-Public surface:
+Public surface (same contract as the previous Campay implementation):
 
-  get_token()                    Lazy / cached bearer token.
-  request_to_pay(...)            Initiate a collection ('Collect').
-  get_status(reference)          Poll the final status of a collection.
-
-Campay does not expose a "is this number an active wallet?" probe, so
-`/momo/link` stores the number and verifies it lazily — the first auto-save
-attempt will reveal an invalid number via a FAILED status.
+  request_to_pay(...)   Initiate a collection. Returns a transId to poll.
+  get_status(transId)   Poll the status of a collection.
+  transfer(...)         Outbound payout to a subscriber.
+  is_configured()       Returns True when credentials are present.
 
 Configuration (all read from settings):
-  CAMPAY_ENV         "sandbox" | "production"
-  CAMPAY_USERNAME    Campay application username (app_username)
-  CAMPAY_PASSWORD    Campay application password (app_password)
+  FAPSHI_ENV               "sandbox" | "production"
+  FAPSHI_COLLECTION_USER   apiuser for pay-in (users pay NkapSave)
+  FAPSHI_COLLECTION_KEY    apikey  for pay-in
+  FAPSHI_PAYOUT_USER       apiuser for pay-out (NkapSave pays users)
+  FAPSHI_PAYOUT_KEY        apikey  for pay-out
 """
 from __future__ import annotations
 
 import logging
-import time
 import uuid
-from dataclasses import dataclass
 from typing import Optional
 
 import httpx
 
 from core.config import settings
 
-logger = logging.getLogger("nkapsave.campay")
+logger = logging.getLogger("nkapsave.fapshi")
 
 
 class MoMoNotConfigured(RuntimeError):
-    """Raised when Campay creds are missing — never silently mock."""
+    """Raised when Fapshi credentials are missing."""
 
 
 class MoMoApiError(RuntimeError):
-    """Raised when Campay rejects or fails to process a request."""
+    """Raised when Fapshi rejects or fails to process a request."""
 
 
 _BASE_URLS = {
-    "sandbox":    "https://demo.campay.net/api",
-    "production": "https://www.campay.net/api",
+    "sandbox":    "https://sandbox.fapshi.com",
+    "production": "https://live.fapshi.com",
 }
 
 
-@dataclass
-class _CachedToken:
-    value: str
-    expires_at: float  # unix epoch
-
-
-_token_cache: Optional[_CachedToken] = None
-
-
 def _base_url() -> str:
-    env = (settings.CAMPAY_ENV or "sandbox").lower()
+    env = (settings.FAPSHI_ENV or "sandbox").lower()
     return _BASE_URLS.get(env, _BASE_URLS["sandbox"])
 
 
-def _require_creds() -> None:
-    missing = [
-        n for n, v in {
-            "CAMPAY_USERNAME": settings.CAMPAY_USERNAME,
-            "CAMPAY_PASSWORD": settings.CAMPAY_PASSWORD,
-        }.items() if not v
-    ]
+def _require_collection_creds() -> None:
+    missing = [n for n, v in {
+        "FAPSHI_COLLECTION_USER": settings.FAPSHI_COLLECTION_USER,
+        "FAPSHI_COLLECTION_KEY":  settings.FAPSHI_COLLECTION_KEY,
+    }.items() if not v]
     if missing:
         raise MoMoNotConfigured(
-            f"Campay is not configured. Missing env vars: {', '.join(missing)}"
+            f"Fapshi collection not configured. Missing: {', '.join(missing)}"
         )
 
 
-def get_token(force_refresh: bool = False) -> str:
-    """Return a cached bearer token, refreshing 60s before expiry.
-
-    Campay tokens are valid for 1 hour. We refresh proactively to avoid
-    a token expiring mid-batch when the scheduler runs many transactions.
-    """
-    global _token_cache
-    _require_creds()
-
-    now = time.time()
-    if not force_refresh and _token_cache and _token_cache.expires_at - 60 > now:
-        return _token_cache.value
-
-    url = f"{_base_url()}/token/"
-    try:
-        resp = httpx.post(
-            url,
-            json={
-                "username": settings.CAMPAY_USERNAME,
-                "password": settings.CAMPAY_PASSWORD,
-            },
-            timeout=15.0,
-        )
-    except httpx.HTTPError as e:
-        raise MoMoApiError(f"Network error fetching Campay token: {e}") from e
-
-    if resp.status_code >= 400:
-        raise MoMoApiError(
-            f"Campay token request failed: {resp.status_code} {resp.text[:200]}"
+def _require_payout_creds() -> None:
+    missing = [n for n, v in {
+        "FAPSHI_PAYOUT_USER": settings.FAPSHI_PAYOUT_USER,
+        "FAPSHI_PAYOUT_KEY":  settings.FAPSHI_PAYOUT_KEY,
+    }.items() if not v]
+    if missing:
+        raise MoMoNotConfigured(
+            f"Fapshi payouts not configured. Missing: {', '.join(missing)}"
         )
 
-    data = resp.json()
-    token = data.get("token")
-    if not token:
-        raise MoMoApiError(f"Campay token response missing 'token': {data}")
-    # Campay doesn't always return an expires_in; default to 55 min.
-    expires_in = int(data.get("expires_in", 3300))
 
-    _token_cache = _CachedToken(value=token, expires_at=now + expires_in)
-    logger.info("Campay token refreshed; expires in %ss", expires_in)
-    return token
-
-
-def _auth_headers() -> dict:
+def _collection_headers() -> dict:
     return {
-        "Authorization": f"Token {get_token()}",
-        "Content-Type":  "application/json",
+        "apiuser":      settings.FAPSHI_COLLECTION_USER or "",
+        "apikey":       settings.FAPSHI_COLLECTION_KEY or "",
+        "Content-Type": "application/json",
+    }
+
+
+def _payout_headers() -> dict:
+    return {
+        "apiuser":      settings.FAPSHI_PAYOUT_USER or "",
+        "apikey":       settings.FAPSHI_PAYOUT_KEY or "",
+        "Content-Type": "application/json",
     }
 
 
 def _msisdn(phone: str) -> str:
-    """Normalise to the full MSISDN Campay expects, e.g. 237670000000.
-
-    Accepts:
-      237670000000  (already fully qualified — pass through)
-      +237670000000 (E.164 — strip '+')
-      670000000     (local 9-digit — prepend country code)
-      0670000000    (local with leading 0 — strip 0, prepend country code)
-    """
+    """Normalise to the full MSISDN (237XXXXXXXXX) for payout / status endpoints."""
     digits = "".join(c for c in (phone or "") if c.isdigit())
     if not digits:
         raise ValueError("Empty phone number")
     cc = settings.DEFAULT_COUNTRY_CODE  # "237"
     if digits.startswith(cc):
-        return digits  # already fully qualified
+        return digits
     if digits.startswith("0"):
-        digits = digits[1:]  # strip leading trunk prefix
+        digits = digits[1:]
     return cc + digits
+
+
+def _local_phone(phone: str) -> str:
+    """Strip country code for direct-pay, which expects local format (67XXXXXXX)."""
+    full = _msisdn(phone)
+    cc = settings.DEFAULT_COUNTRY_CODE
+    return full[len(cc):] if full.startswith(cc) else full
+
+
+# Fapshi does not need a token endpoint — auth is per-request API key headers.
+# This stub is kept so callers that import get_token() don't break.
+def get_token(force_refresh: bool = False) -> str:  # noqa: ARG001
+    _require_collection_creds()
+    return settings.FAPSHI_COLLECTION_KEY or ""
 
 
 def request_to_pay(
     *, phone: str, amount: int, currency: str = "XAF",
     external_id: str, payer_message: str, payee_note: str,
 ) -> str:
-    """Initiate a Campay collection. Returns the Campay reference to poll.
+    """Initiate a Fapshi collection. Returns the transId to poll.
 
     The user receives a USSD/push from MTN or Orange and approves with their PIN.
-    `payee_note` isn't used by Campay's API but we accept it so callers don't
-    need to know which provider they're talking to.
+    `currency` is accepted for interface compatibility — Fapshi always uses XAF.
+    `payee_note` is not sent to Fapshi but accepted so callers don't need to
+    know which provider they're talking to.
     """
-    _require_creds()
-    url = f"{_base_url()}/collect/"
+    _require_collection_creds()
+    # /direct-pay sends a USSD push to the user's phone (unlike /initiate-pay
+    # which only creates a checkout link with no USSD prompt).
+    url = f"{_base_url()}/direct-pay"
     body = {
-        "amount":             str(int(amount)),
-        "currency":           currency,
-        "from":               _msisdn(phone),
-        "description":        payer_message[:160],
-        "external_reference": external_id,
+        "amount":     int(amount),
+        "phone":      _local_phone(phone),   # direct-pay expects 67XXXXXXX (no CC)
+        "externalId": external_id,
+        "message":    payer_message[:160],
     }
     try:
-        resp = httpx.post(url, headers=_auth_headers(), json=body, timeout=20.0)
+        resp = httpx.post(url, headers=_collection_headers(), json=body, timeout=20.0)
     except httpx.HTTPError as e:
-        raise MoMoApiError(f"Network error on collect: {e}") from e
+        raise MoMoApiError(f"Network error on direct-pay: {e}") from e
 
     if resp.status_code >= 400:
         raise MoMoApiError(
-            f"Campay collect rejected: {resp.status_code} {resp.text[:200]}"
+            f"Fapshi direct-pay rejected: {resp.status_code} {resp.text[:200]}"
         )
 
     data = resp.json()
-    reference = data.get("reference")
-    if not reference:
-        raise MoMoApiError(f"Campay collect response missing 'reference': {data}")
+    # direct-pay returns transId at root (no "data" wrapper).
+    trans_id = data.get("transId") or (data.get("data") or {}).get("transId")
+    if not trans_id:
+        raise MoMoApiError(f"Fapshi direct-pay response missing transId: {data}")
     logger.info(
-        "Campay collect accepted ref=%s amount=%s %s phone=%s operator=%s",
-        reference, amount, currency, _msisdn(phone), data.get("operator", "?"),
+        "Fapshi direct-pay accepted transId=%s amount=%s phone=%s",
+        trans_id, amount, _local_phone(phone),
     )
-    return reference
+    return trans_id
 
 
 def transfer(
     *, phone: str, amount: int, external_id: str, description: str,
 ) -> str:
-    """Initiate a Campay outbound transfer to a subscriber.
+    """Initiate a Fapshi outbound payout to a subscriber.
 
     Sends `amount` XAF from the merchant wallet to `phone`. Returns the
-    Campay reference string. Raises MoMoApiError on rejection.
+    transId. Raises MoMoApiError on rejection.
+    `external_id` is accepted for interface compatibility — Fapshi payouts
+    don't have a client-supplied external ID but we log it for traceability.
     """
-    _require_creds()
-    url = f"{_base_url()}/transfer/"
+    _require_payout_creds()
+    url = f"{_base_url()}/payout"
     body = {
-        "amount":             str(int(amount)),
-        "to":                 _msisdn(phone),
-        "description":        description[:160],
-        "external_reference": external_id,
+        "amount":  int(amount),
+        "phone":   _msisdn(phone),
+        "message": description[:160],
     }
     try:
-        resp = httpx.post(url, headers=_auth_headers(), json=body, timeout=30.0)
+        resp = httpx.post(url, headers=_payout_headers(), json=body, timeout=30.0)
     except httpx.HTTPError as e:
-        raise MoMoApiError(f"Network error on transfer: {e}") from e
+        raise MoMoApiError(f"Network error on payout: {e}") from e
 
     if resp.status_code >= 400:
+        content_type = resp.headers.get("content-type", "")
+        if "html" in content_type or resp.text.lstrip().startswith("<"):
+            raise MoMoApiError(
+                f"Fapshi payout endpoint unavailable (HTTP {resp.status_code}). "
+                "Outbound payouts may not be enabled on this account yet."
+            )
         raise MoMoApiError(
-            f"Campay transfer rejected: {resp.status_code} {resp.text[:200]}"
+            f"Fapshi payout rejected ({resp.status_code}): {resp.text[:200]}"
         )
 
     data = resp.json()
-    reference = data.get("reference")
-    if not reference:
-        raise MoMoApiError(f"Campay transfer response missing 'reference': {data}")
+    # Production returns transId at root; sandbox wraps it under "data".
+    trans_id = data.get("transId") or (data.get("data") or {}).get("transId")
+    if not trans_id:
+        raise MoMoApiError(f"Fapshi payout response missing transId: {data}")
     logger.info(
-        "Campay transfer accepted ref=%s amount=%s phone=%s",
-        reference, amount, _msisdn(phone),
+        "Fapshi payout accepted transId=%s amount=%s phone=%s (external_id=%s)",
+        trans_id, amount, _msisdn(phone), external_id,
     )
-    return reference
+    return trans_id
 
 
 def get_status(reference_id: str) -> dict:
     """Return the current state of a collection.
 
-    Campay's transaction object includes:
-      status:    SUCCESSFUL | FAILED | PENDING
-      reason:    failure detail if any
-      operator:  MTN | ORANGE (only set once we know)
+    Returns a dict with at least:
+      status:  SUCCESSFUL | FAILED | PENDING
+      reason:  failure detail if any (EXPIRED maps to FAILED + reason=EXPIRED)
+
+    Fapshi also returns EXPIRED for prompts the user ignored; we normalise
+    that to FAILED so the settlement loop handles it uniformly.
     """
-    _require_creds()
-    url = f"{_base_url()}/transaction/{reference_id}/"
+    _require_collection_creds()
+    url = f"{_base_url()}/payment-status/{reference_id}"
     try:
-        resp = httpx.get(url, headers=_auth_headers(), timeout=15.0)
+        resp = httpx.get(url, headers=_collection_headers(), timeout=15.0)
     except httpx.HTTPError as e:
-        raise MoMoApiError(f"Network error on get_status: {e}") from e
+        raise MoMoApiError(f"Network error on payment-status: {e}") from e
 
     if resp.status_code >= 400:
         raise MoMoApiError(
-            f"get_status failed: {resp.status_code} {resp.text[:200]}"
+            f"payment-status failed: {resp.status_code} {resp.text[:200]}"
         )
 
     data = resp.json()
-    # Normalise to the contract auto_save_service expects: uppercase status.
-    if "status" in data and isinstance(data["status"], str):
-        data["status"] = data["status"].upper()
-    return data
+    # Production returns fields at root; sandbox wraps them under "data".
+    tx = data.get("data") or data
+    status = (tx.get("status") or "PENDING").upper()
+
+    # EXPIRED = user ignored the USSD prompt; treat as FAILED so the
+    # settlement loop picks it up and fires the "not_approved" notification.
+    if status == "EXPIRED":
+        return {"status": "FAILED", "reason": "EXPIRED"}
+
+    return {
+        "status": status,
+        "reason": tx.get("reason") or tx.get("message"),
+    }
+
+
+def initiate_pay(
+    *, amount: int, email: str, external_id: str,
+    redirect_url: str = "", message: str = "",
+) -> tuple[str, str]:
+    """Create a Fapshi payment link (no USSD push — user clicks to pay).
+
+    Returns (link, transId). Use this as a fallback when direct-pay is not
+    activated on the account, or for web/email payment flows.
+    """
+    _require_collection_creds()
+    url = f"{_base_url()}/initiate-pay"
+    body = {
+        "amount":      int(amount),
+        "email":       email,
+        "externalId":  external_id,
+        "message":     message[:160],
+        "redirectUrl": redirect_url,
+    }
+    try:
+        resp = httpx.post(url, headers=_collection_headers(), json=body, timeout=20.0)
+    except httpx.HTTPError as e:
+        raise MoMoApiError(f"Network error on initiate-pay: {e}") from e
+
+    if resp.status_code >= 400:
+        raise MoMoApiError(
+            f"Fapshi initiate-pay rejected: {resp.status_code} {resp.text[:200]}"
+        )
+
+    data = resp.json()
+    link = data.get("link") or ""
+    trans_id = data.get("transId") or ""
+    if not trans_id:
+        raise MoMoApiError(f"Fapshi initiate-pay response missing transId: {data}")
+    logger.info("Fapshi initiate-pay transId=%s link=%s", trans_id, link)
+    return link, trans_id
+
+
+def get_balance() -> dict:
+    """Return the merchant wallet balance.
+
+    Returns a dict with 'service', 'balance' (int XAF), and 'currency'.
+    Useful for checking whether payouts are funded before initiating them.
+    """
+    _require_collection_creds()
+    url = f"{_base_url()}/balance"
+    try:
+        resp = httpx.get(url, headers=_collection_headers(), timeout=15.0)
+    except httpx.HTTPError as e:
+        raise MoMoApiError(f"Network error on balance: {e}") from e
+
+    if resp.status_code >= 400:
+        raise MoMoApiError(
+            f"Fapshi balance check failed: {resp.status_code} {resp.text[:200]}"
+        )
+
+    return resp.json()
+
+
+def expire_transaction(trans_id: str) -> None:
+    """Cancel/expire a pending payment transaction."""
+    _require_collection_creds()
+    url = f"{_base_url()}/expire-pay"
+    try:
+        resp = httpx.post(
+            url, headers=_collection_headers(), json={"transId": trans_id}, timeout=15.0
+        )
+    except httpx.HTTPError as e:
+        raise MoMoApiError(f"Network error on expire-pay: {e}") from e
+
+    if resp.status_code >= 400:
+        raise MoMoApiError(
+            f"Fapshi expire-pay failed: {resp.status_code} {resp.text[:200]}"
+        )
+    logger.info("Fapshi expired transId=%s", trans_id)
+
+
+def get_transactions_by_user(user_id: str) -> list:
+    """Fetch all transactions for a given userId from Fapshi."""
+    _require_collection_creds()
+    url = f"{_base_url()}/transaction/{user_id}"
+    try:
+        resp = httpx.get(url, headers=_collection_headers(), timeout=15.0)
+    except httpx.HTTPError as e:
+        raise MoMoApiError(f"Network error on transaction lookup: {e}") from e
+
+    if resp.status_code >= 400:
+        raise MoMoApiError(
+            f"Fapshi transaction lookup failed: {resp.status_code} {resp.text[:200]}"
+        )
+
+    return resp.json()
 
 
 def is_configured() -> bool:
     """Cheap check used by the scheduler to skip work when creds are absent."""
-    return bool(settings.CAMPAY_USERNAME and settings.CAMPAY_PASSWORD)
+    return bool(settings.FAPSHI_COLLECTION_USER and settings.FAPSHI_COLLECTION_KEY)

@@ -70,27 +70,38 @@ def _run_tesseract(image_bytes: bytes) -> str:
     except Exception as e:
         raise OcrNotAvailable(f"Could not open image: {e}") from e
 
-    # Light preprocessing for receipts (greyscale helps contrast).
+    from PIL import ImageEnhance, ImageFilter
+
     img = img.convert("L")
+    # Scale up small images so Tesseract sees ~300 DPI worth of detail.
+    w, h = img.size
+    if max(w, h) < 1500:
+        scale = 2
+        img = img.resize((w * scale, h * scale), Image.LANCZOS)
+    # Boost contrast then sharpen — thermal receipts often have low contrast.
+    img = ImageEnhance.Contrast(img).enhance(2.0)
+    img = img.filter(ImageFilter.SHARPEN)
+
+    config = "--oem 1 --psm 6"   # LSTM engine, assume uniform text block
     try:
-        # French + English. If lang packs aren't installed, Tesseract falls
-        # back to default automatically.
-        return pytesseract.image_to_string(img, lang="fra+eng")
+        return pytesseract.image_to_string(img, lang="fra+eng", config=config)
     except pytesseract.TesseractError as e:
-        # Most often "Failed loading language 'fra'". Retry default.
         logger.warning("tesseract multi-lang failed (%s); retrying default", e)
-        return pytesseract.image_to_string(img)
+        return pytesseract.image_to_string(img, config=config)
 
 
 # ─── Parser ───────────────────────────────────────────────────────
 
 _AMOUNT_RE = re.compile(
-    # Either a separator-grouped number ("1 500", "1,500", "1.500")
-    # OR a plain digit run ("4600"), optionally followed by decimals.
-    r"(?P<num>(?:\d{1,3}(?:[ .,]\d{3})+|\d+)(?:[.,]\d{1,2})?)\s*"
+    # Either a separator-grouped number ("1 500", "1,500", "1.500") limited to
+    # 2 separator groups (max ~99,999,999), OR a plain digit run capped at 8
+    # digits — prevents matching barcodes / product codes as prices.
+    r"(?P<num>(?:\d{1,3}(?:[ .,]\d{3}){1,2}|\d{1,8})(?:[.,]\d{1,2})?)\s*"
     r"(?P<unit>fcfa|f\.cfa|xaf|f\s*cfa|frs?|fr\s*cfa)?",
     re.IGNORECASE,
 )
+
+_MAX_RECEIPT_AMOUNT = 10_000_000   # 10 M FCFA — generous ceiling for any real receipt
 _TOTAL_HINTS = re.compile(
     r"\b(total|montant|à\s*payer|a\s*payer|net\s*à\s*payer|grand\s*total|amount)\b",
     re.IGNORECASE,
@@ -100,15 +111,15 @@ _DATE_RE = re.compile(
 )
 
 
+_OCR_DIGIT_FIX = str.maketrans("OoIlSsBbGgZz", "001155886622")
+
 def _normalize_amount(raw: str) -> Optional[float]:
-    s = raw.strip().replace(" ", "")
-    # Cameroonian receipts use either '.' or ',' as thousands separator.
-    # Drop both unless what's left after dropping looks too small to be a total.
-    if s.count(".") > 1 or s.count(",") > 1:
-        s = s.replace(".", "").replace(",", "")
-    else:
-        # Single separator — treat as thousands.
-        s = s.replace(".", "").replace(",", "")
+    s = raw.strip()
+    # Fix common OCR misreads inside what looks like a number.
+    s = s.translate(_OCR_DIGIT_FIX)
+    s = s.replace(" ", "").replace("\xa0", "")  # drop spaces & non-breaking spaces
+    # Strip thousands separators (both . and , used in Cameroonian receipts).
+    s = s.replace(".", "").replace(",", "")
     try:
         return float(s)
     except ValueError:
@@ -127,7 +138,7 @@ def _likely_total(lines: list[str]) -> Optional[float]:
             score += 2
         for m in _AMOUNT_RE.finditer(line):
             amt = _normalize_amount(m.group("num"))
-            if amt is None or amt < 100:
+            if amt is None or amt < 100 or amt > _MAX_RECEIPT_AMOUNT:
                 continue
             # Receipts: bigger numbers tend to be totals, but cap so a wild
             # 1.5M outlier doesn't dominate over a clean labelled total.
@@ -183,7 +194,7 @@ def _line_items(lines: list[str]) -> list[OcrLineItem]:
         m = _AMOUNT_RE.search(s)
         if not m: continue
         amt = _normalize_amount(m.group("num"))
-        if amt is None or amt < 50:
+        if amt is None or amt < 50 or amt > _MAX_RECEIPT_AMOUNT:
             continue
         # Strip the matched amount from the name part.
         name = (s[:m.start()] + s[m.end():]).strip(" -:|.")

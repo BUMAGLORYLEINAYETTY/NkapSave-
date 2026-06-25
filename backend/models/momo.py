@@ -56,6 +56,10 @@ class AutoSavePlan(Base):
     consecutive_failures = Column(Integer, default=0, nullable=False)
     last_milestone_notified = Column(Integer, default=0, nullable=False)  # 0|25|50|75|100
     reminder_enabled = Column(Boolean, default=True, nullable=False)
+    # Hour (0-23) in WAT (UTC+1) when the user wants deductions to fire.
+    # 8 = 8 AM WAT (morning default). Scheduler converts to UTC when
+    # computing next_run_at so USSD prompts arrive at a predictable time.
+    preferred_hour   = Column(Integer, default=8, nullable=False)
     # Tracks the `next_run_at` value we last sent a reminder for. When the
     # plan advances after a deduction, this becomes stale and the next
     # reminder fires. Avoids double-sends without a separate audit table.

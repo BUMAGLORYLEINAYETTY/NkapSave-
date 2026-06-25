@@ -307,7 +307,11 @@ async def _attempt_njangi_transfer(db: AsyncSession, settle: dict) -> str | None
         )
     except (momo_provider.MoMoApiError, momo_provider.MoMoNotConfigured) as e:
         logger.error("njangi payout transfer failed payout=%s: %s", payout.id, e)
-        return f"Payout of {payout.net_amount:,.0f} FCFA pending — transfer failed: {e}"
+        return (
+            f"Payout of {payout.net_amount:,.0f} FCFA is pending — "
+            "the transfer couldn't be sent automatically. "
+            "The group admin can retry it once the account is activated."
+        )
 
     payout.payout_status      = "completed"
     payout.transfer_reference = reference
@@ -380,6 +384,7 @@ async def contribute(
     db.add(contrib)
     await db.flush()
 
+    payment_link: str | None = None
     try:
         reference = momo_provider.request_to_pay(
             phone=body.phone, amount=int(group.contribution), currency="XAF",
@@ -391,14 +396,32 @@ async def contribute(
         await db.delete(contrib)
         await db.flush()
         raise HTTPException(status_code=503, detail=str(e))
-    except momo_provider.MoMoApiError as e:
-        await db.delete(contrib)
-        await db.flush()
-        raise HTTPException(status_code=502, detail=str(e))
+    except momo_provider.MoMoApiError:
+        # direct-pay not yet activated — fall back to a Fapshi payment link.
+        # The user clicks the link in their browser to complete the payment.
+        try:
+            u_res = await db.execute(
+                select(User).where(User.id == current_user["user_id"]))
+            user = u_res.scalar_one()
+            payment_link, reference = momo_provider.initiate_pay(
+                amount=int(group.contribution),
+                email=user.email or "user@nkapsave.cm",
+                external_id=str(contrib.id),
+                message=f"Njangi contribution - {group.name}"[:160],
+            )
+        except momo_provider.MoMoApiError as e2:
+            await db.delete(contrib)
+            await db.flush()
+            raise HTTPException(status_code=502, detail=str(e2))
 
     contrib.momo_reference = reference
     await db.flush()
-    return {"status": "pending", "contribution_id": str(contrib.id), "reference": reference}
+    return {
+        "status": "pending",
+        "contribution_id": str(contrib.id),
+        "reference": reference,
+        "payment_link": payment_link,
+    }
 
 
 @router.post("/groups/{group_id}/contribute/{contribution_id}/poll", status_code=200)
@@ -431,8 +454,16 @@ async def poll_contribution(
 
     try:
         status_data = momo_provider.get_status(contrib.momo_reference)
-    except momo_provider.MoMoApiError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+    except (momo_provider.MoMoApiError, momo_provider.MoMoNotConfigured) as e:
+        # Fapshi returned an error or credentials are missing — expire the
+        # contribution so the user can retry rather than seeing a 500/502.
+        logger.warning(
+            "njangi poll: get_status failed for contribution %s ref=%s — expiring: %s",
+            contribution_id, contrib.momo_reference, e,
+        )
+        contrib.status = "expired"
+        await db.commit()
+        return {"status": "expired", "all_paid": False, "payout_msg": None}
 
     momo_status = status_data.get("status")
     if momo_status == "SUCCESSFUL":
@@ -876,15 +907,19 @@ async def group_history(
         })
     for p in payouts:
         events.append({
-            "type":          "payout",
-            "actor":         _label(p.recipient_id, me),
-            "picture":       _picture(p.recipient_id),
-            "cycle":         p.cycle,
-            "amount":        p.net_amount,
-            "gross_amount":  p.gross_amount,
-            "escrow_amount": p.escrow_amount,
-            "trust_score":   p.trust_score,
-            "created_at":    p.created_at.isoformat() if p.created_at else None,
+            "type":               "payout",
+            "payout_id":          str(p.id),
+            "actor":              _label(p.recipient_id, me),
+            "picture":            _picture(p.recipient_id),
+            "cycle":              p.cycle,
+            "amount":             p.net_amount,
+            "gross_amount":       p.gross_amount,
+            "escrow_amount":      p.escrow_amount,
+            "trust_score":        p.trust_score,
+            "payout_status":      getattr(p, "payout_status", "completed"),
+            "transfer_reference": getattr(p, "transfer_reference", None),
+            "recipient_phone":    getattr(p, "recipient_phone", None),
+            "created_at":         p.created_at.isoformat() if p.created_at else None,
         })
 
     # Newest first. Items with no timestamp (shouldn't happen normally

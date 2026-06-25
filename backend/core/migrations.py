@@ -237,6 +237,18 @@ async def add_njangi_payout_transfer_columns(engine: AsyncEngine) -> None:
             await conn.execute(text(sql))
 
 
+async def add_auto_save_preferred_hour(engine: AsyncEngine) -> None:
+    """Add preferred_hour to auto_save_plans.
+
+    Existing plans default to 8 (8 AM WAT) so their next_run_at stays
+    predictable after the migration."""
+    async with engine.begin() as conn:
+        await conn.execute(text(
+            "ALTER TABLE auto_save_plans ADD COLUMN IF NOT EXISTS "
+            "preferred_hour INTEGER NOT NULL DEFAULT 8"
+        ))
+
+
 async def add_momo_transfers_table(engine: AsyncEngine) -> None:
     """Create the momo_transfers table for outbound Campay transfer audit log."""
     async with engine.begin() as conn:
@@ -272,6 +284,7 @@ async def run_dev_migrations(engine: AsyncEngine) -> None:
         await unlock_existing_savings_goals(engine)
         await add_njangi_payout_transfer_columns(engine)
         await add_momo_transfers_table(engine)
+        await add_auto_save_preferred_hour(engine)
     except Exception as e:  # pragma: no cover — dev only
         logger.exception("Dev migration failed: %s", e)
         raise

@@ -32,6 +32,9 @@ class CreateAutoSavePlanRequest(BaseModel):
     amount:                  Optional[float] = Field(default=None, gt=0)
     assumed_monthly_income:  Optional[float] = Field(default=None, gt=0)
     reminder_enabled:        bool = True
+    # Hour (0-23) in WAT when the user wants the USSD prompt to arrive.
+    # Default 8 = 8 AM morning deduction.
+    preferred_hour:          int  = Field(default=8, ge=0, le=23)
 
 
 class UpdateAutoSavePlanRequest(BaseModel):
@@ -40,6 +43,7 @@ class UpdateAutoSavePlanRequest(BaseModel):
     amount:           Optional[float]     = Field(default=None, gt=0)
     active:           Optional[bool]      = None
     reminder_enabled: Optional[bool]      = None
+    preferred_hour:   Optional[int]       = Field(default=None, ge=0, le=23)
 
 
 class AutoSavePlanOut(BaseModel):
@@ -53,6 +57,7 @@ class AutoSavePlanOut(BaseModel):
     last_run_at: Optional[datetime]
     consecutive_failures: int
     reminder_enabled:     bool = True
+    preferred_hour:       int  = 8
 
 
 # ─── MoMo transaction log ──────────────────────────────────────────

@@ -53,12 +53,12 @@ async def link_wallet(
 ):
     """Link a MoMo wallet (MTN or Orange).
 
-    Campay doesn't expose a 'is this number an active wallet?' check, so we
+    Fapshi doesn't expose a 'is this number an active wallet?' check, so we
     save the number and mark it verified. The first auto-save Collect will
     surface invalid numbers as a FAILED transaction, and the user gets a push
     explaining what happened.
 
-    `provider` is set to "campay" since Campay aggregates both operators —
+    `provider` is set to "fapshi" since Fapshi aggregates both operators —
     the actual MTN-vs-Orange determination happens at Collect time.
     """
     if not momo_provider.is_configured():
@@ -75,7 +75,7 @@ async def link_wallet(
     if conn is None:
         conn = MoMoConnection(
             user_id=current_user["user_id"],
-            provider="campay",
+            provider="fapshi",
             phone=body.phone,
             verified=True,
             last_verified_at=now,
@@ -83,7 +83,7 @@ async def link_wallet(
         db.add(conn)
     else:
         conn.phone = body.phone
-        conn.provider = "campay"
+        conn.provider = "fapshi"
         conn.verified = True
         conn.last_verified_at = now
 
@@ -127,12 +127,23 @@ async def unlink_wallet(
     return {"message": "MoMo wallet unlinked. Auto-save plans paused."}
 
 
+@router.get("/balance")
+async def wallet_balance(current_user: dict = Depends(get_current_user)):
+    """Return the Fapshi merchant wallet balance (admin/debug use)."""
+    if not momo_provider.is_configured():
+        raise HTTPException(status_code=503, detail="MoMo not configured.")
+    try:
+        return momo_provider.get_balance()
+    except momo_provider.MoMoApiError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
 @router.post("/callback", status_code=200, include_in_schema=False)
 async def momo_callback(payload: dict = Body(...)):
-    """MTN posts status updates here when MOMO_CALLBACK_HOST is set.
+    """Fapshi posts status updates here for webhook-configured services.
 
-    Sandbox callbacks are unreliable, so we still poll. We just log the body
-    for debugging — the scheduler does the actual settlement.
+    We log the body for debugging — the scheduler also polls, so this is
+    a nice-to-have speedup, not a hard dependency.
     """
-    logger.info("MoMo callback: %s", payload)
+    logger.info("MoMo webhook callback: %s", payload)
     return {"ok": True}

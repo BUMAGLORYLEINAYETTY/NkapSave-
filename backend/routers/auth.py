@@ -1,3 +1,4 @@
+import asyncio
 import secrets
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import RedirectResponse
@@ -73,7 +74,7 @@ class RegisterResponse(BaseModel):
 
 
 class ResendRequest(BaseModel):
-    email: EmailStr
+    email: str  # validated manually so we never 422 — always return 200
 
 
 class RefreshRequest(BaseModel):
@@ -186,12 +187,17 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await db.flush()
     await db.refresh(user)
 
-    # Send verification email — best-effort: if SMTP isn't configured the
-    # account is created but the user can request a resend once they set up SMTP.
-    try:
-        await _send_verification_email(email, token)
-    except Exception:
-        pass  # don't fail registration just because SMTP is down
+    # Fire verification email without blocking the response. asyncio.create_task
+    # schedules it on the running event loop immediately and the HTTP response
+    # is returned to the client before the SMTP handshake begins.
+    async def _send_quietly() -> None:
+        try:
+            await _send_verification_email(email, token)
+            logger.info("Verification email sent to %s", email)
+        except Exception as exc:
+            logger.error("Verification email FAILED for %s: %s", email, exc)
+
+    asyncio.create_task(_send_quietly())
 
     return RegisterResponse(
         message=(
@@ -232,6 +238,9 @@ async def resend_verification(body: ResendRequest, db: AsyncSession = Depends(ge
     """Re-send the verification email. Always returns 200 to avoid
     leaking whether the address is registered."""
     email = body.email.lower().strip()
+    if not email or '@' not in email:
+        return {"message": "If that email address is registered and unverified, a new link has been sent."}
+
     res = await db.execute(select(User).where(User.email == email))
     user = res.scalar_one_or_none()
 

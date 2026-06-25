@@ -1,8 +1,11 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import datetime, timedelta, timezone
 from core.database import get_db
+
+logger = logging.getLogger("nkapsave.savings")
 from core.security import get_current_user
 from models.user import User
 from models.savings import SavingsGoal
@@ -34,6 +37,7 @@ def _plan_out(p: AutoSavePlan) -> AutoSavePlanOut:
         last_run_at=p.last_run_at,
         consecutive_failures=p.consecutive_failures,
         reminder_enabled=p.reminder_enabled,
+        preferred_hour=p.preferred_hour if p.preferred_hour is not None else 8,
     )
 
 
@@ -538,6 +542,7 @@ async def create_auto_save_plan(
             db, user_id=user_id, goal_id=goal_id,
             percent=body.percent, frequency=body.frequency, amount=amount,
             reminder_enabled=body.reminder_enabled,
+            preferred_hour=body.preferred_hour,
         )
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
@@ -578,6 +583,7 @@ async def patch_auto_save_plan(
         percent=body.percent, frequency=body.frequency,
         amount=body.amount, active=body.active,
         reminder_enabled=body.reminder_enabled,
+        preferred_hour=body.preferred_hour,
     )
     await db.commit()
     await db.refresh(plan)
@@ -595,3 +601,156 @@ async def delete_auto_save_plan(
     await db.delete(plan)
     await db.commit()
     return {"message": "Auto-save plan cancelled"}
+
+
+@router.post("/goals/{goal_id}/auto-save/collect-now", status_code=200)
+async def collect_now(
+    goal_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Immediately initiate a Campay collection for this goal's auto-save plan.
+
+    Sends a real USSD/push prompt to the user's linked MoMo phone right now,
+    without waiting for the scheduler. The transaction settles within ~2 minutes
+    when the scheduler's settle_pending job polls Campay for the result.
+
+    Returns the reference_id so the client can poll for status.
+    """
+    user_id = current_user["user_id"]
+    goal = await _load_user_goal(db, user_id, goal_id)
+    if goal.is_completed:
+        raise HTTPException(status_code=400, detail="Goal is already completed.")
+
+    plan = await _load_user_plan(db, user_id, goal_id)
+    if not plan.active:
+        raise HTTPException(status_code=400, detail="Auto-save plan is paused.")
+
+    conn_res = await db.execute(
+        select(MoMoConnection).where(
+            MoMoConnection.user_id == user_id,
+            MoMoConnection.verified == True,  # noqa: E712
+        )
+    )
+    conn = conn_res.scalar_one_or_none()
+    if not conn:
+        raise HTTPException(
+            status_code=400,
+            detail="No verified MoMo wallet linked. Connect your wallet first.",
+        )
+
+    if not momo_provider.is_configured():
+        raise HTTPException(
+            status_code=503,
+            detail="Mobile-money integration is not configured on this server.",
+        )
+
+    external_id = uuid.uuid4().hex[:32]
+    payment_link: str | None = None
+
+    try:
+        ref_id = momo_provider.request_to_pay(
+            phone=conn.phone,
+            amount=int(plan.amount),
+            external_id=external_id,
+            payer_message="NkapSave — save now",
+            payee_note=f"Saving toward {goal.name}"[:160],
+        )
+    except momo_provider.MoMoNotConfigured as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except momo_provider.MoMoApiError:
+        # direct-pay not yet activated — fall back to a Fapshi payment link.
+        try:
+            u_res = await db.execute(select(User).where(User.id == user_id))
+            user = u_res.scalar_one()
+            payment_link, ref_id = momo_provider.initiate_pay(
+                amount=int(plan.amount),
+                email=user.email or "user@nkapsave.cm",
+                external_id=external_id,
+                message=f"NkapSave – {goal.name}"[:160],
+            )
+        except momo_provider.MoMoApiError as e2:
+            raise HTTPException(status_code=502, detail=f"MoMo request failed: {e2}")
+
+    db.add(MoMoTransaction(
+        user_id=user_id,
+        plan_id=plan.id,
+        goal_id=goal.id,
+        reference_id=ref_id,
+        external_id=external_id,
+        amount=plan.amount,
+        currency="XAF",
+        phone=conn.phone,
+        status="PENDING",
+    ))
+    await db.commit()
+
+    if payment_link:
+        return {
+            "reference_id": ref_id,
+            "amount": plan.amount,
+            "payment_link": payment_link,
+            "message": "Open the payment link to complete your MoMo transfer. Your goal updates automatically once paid.",
+        }
+    return {
+        "reference_id": ref_id,
+        "amount": plan.amount,
+        "phone": conn.phone,
+        "message": "MoMo prompt sent. Approve it on your phone — your goal will update within 2 minutes.",
+    }
+
+
+@router.post("/goals/{goal_id}/auto-save/collect-now/{reference_id}/settle", status_code=200)
+async def settle_collect_now(
+    goal_id: str,
+    reference_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Poll Fapshi right now for a specific pending transaction and credit the goal if paid.
+
+    The scheduler does this automatically every 2 minutes, but this endpoint
+    lets the Flutter app check immediately after the user completes payment
+    in their browser (initiate-pay flow).
+    """
+    user_id = current_user["user_id"]
+    tx_res = await db.execute(
+        select(MoMoTransaction).where(
+            MoMoTransaction.reference_id == reference_id,
+            MoMoTransaction.user_id == user_id,
+        )
+    )
+    tx = tx_res.scalar_one_or_none()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    if tx.status != "PENDING":
+        return {"status": tx.status, "credited": 0, "completed": False}
+
+    try:
+        data = momo_provider.get_status(reference_id)
+    except (momo_provider.MoMoApiError, momo_provider.MoMoNotConfigured) as e:
+        logger.warning("settle: get_status failed for ref=%s: %s", reference_id, e)
+        return {"status": "pending", "credited": 0, "completed": False}
+
+    status = (data.get("status") or "PENDING").upper()
+    if status == "PENDING":
+        return {"status": "pending", "credited": 0, "completed": False}
+
+    tx.status = status
+    tx.completed_at = datetime.utcnow()
+    tx.reason = data.get("reason")
+
+    credited = 0.0
+    completed = False
+    if status == "SUCCESSFUL":
+        goal = await _load_user_goal(db, user_id, goal_id)
+        goal.current = min(goal.current + tx.amount, goal.target)
+        completed = goal.current >= goal.target
+        if completed:
+            goal.is_completed = True
+            goal.is_locked = False
+        credited = tx.amount
+
+    await db.commit()
+    return {"status": status.lower(), "credited": credited, "completed": completed}

@@ -97,9 +97,38 @@ _FREQ_DELTA = {
 _MILESTONES = (25, 50, 75, 100)
 
 
+def _utc_hour(preferred_hour: int) -> int:
+    """Convert a WAT hour (UTC+1) to UTC hour."""
+    return (preferred_hour - 1) % 24
+
+
+def _next_occurrence(preferred_hour: int, delta: timedelta) -> datetime:
+    """Return the next_run_at datetime in UTC.
+
+    Adds `delta` to now, then pins the time to the UTC equivalent of
+    `preferred_hour` WAT. This ensures the USSD prompt arrives at the
+    hour the user chose, not at some arbitrary minute during the day.
+    """
+    utc_h = _utc_hour(preferred_hour)
+    base = datetime.utcnow() + delta
+    return base.replace(hour=utc_h, minute=0, second=0, microsecond=0)
+
+
+def _first_run(preferred_hour: int) -> datetime:
+    """First next_run_at for a new plan — today at preferred_hour if it
+    hasn't passed yet, otherwise tomorrow at that hour."""
+    utc_h = _utc_hour(preferred_hour)
+    now = datetime.utcnow()
+    candidate = now.replace(hour=utc_h, minute=0, second=0, microsecond=0)
+    if candidate <= now:
+        candidate += timedelta(days=1)
+    return candidate
+
+
 def _advance(plan: AutoSavePlan) -> datetime:
     delta = _FREQ_DELTA.get(plan.frequency, _FREQ_DELTA["monthly"])
-    return datetime.utcnow() + delta
+    preferred_hour = getattr(plan, 'preferred_hour', 8) or 8
+    return _next_occurrence(preferred_hour, delta)
 
 
 # ─── Plan CRUD (used by HTTP layer) ───────────────────────────────
@@ -108,6 +137,7 @@ async def create_plan(
     db: AsyncSession, *, user_id: str, goal_id: str,
     percent: int, frequency: str, amount: float,
     reminder_enabled: bool = True,
+    preferred_hour: int = 8,
 ) -> AutoSavePlan:
     # One plan per goal — enforce.
     existing = await db.execute(
@@ -124,7 +154,8 @@ async def create_plan(
         frequency=frequency,
         active=True,
         reminder_enabled=reminder_enabled,
-        next_run_at=datetime.utcnow() + _FREQ_DELTA.get(frequency, _FREQ_DELTA["monthly"]),
+        preferred_hour=preferred_hour,
+        next_run_at=_first_run(preferred_hour),
     )
     db.add(plan)
     await db.flush()
@@ -138,19 +169,25 @@ async def update_plan(
     amount: Optional[float] = None,
     active: Optional[bool] = None,
     reminder_enabled: Optional[bool] = None,
+    preferred_hour: Optional[int] = None,
 ) -> AutoSavePlan:
     if percent is not None:
         plan.percent = percent
     if amount is not None:
         plan.amount = amount
+    if preferred_hour is not None:
+        plan.preferred_hour = preferred_hour
     if frequency is not None and frequency != plan.frequency:
         plan.frequency = frequency
-        # Recompute next_run_at from the new cadence, starting from now.
-        plan.next_run_at = datetime.utcnow() + _FREQ_DELTA.get(frequency, _FREQ_DELTA["monthly"])
+        plan.next_run_at = _next_occurrence(
+            plan.preferred_hour or 8, _FREQ_DELTA.get(frequency, _FREQ_DELTA["monthly"])
+        )
     if active is not None:
         plan.active = active
         if active and plan.next_run_at < datetime.utcnow():
-            plan.next_run_at = datetime.utcnow() + _FREQ_DELTA.get(plan.frequency, _FREQ_DELTA["monthly"])
+            plan.next_run_at = _next_occurrence(
+                plan.preferred_hour or 8, _FREQ_DELTA.get(plan.frequency, _FREQ_DELTA["monthly"])
+            )
     if reminder_enabled is not None:
         plan.reminder_enabled = reminder_enabled
     await db.flush()

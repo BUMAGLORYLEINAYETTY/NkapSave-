@@ -49,7 +49,7 @@ if settings.is_production and not origins:
 
 cors_kwargs = {
     "allow_credentials": True,
-    "allow_methods": ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    "allow_methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     "allow_headers": ["Authorization", "Content-Type"],
 }
 if settings.is_production:

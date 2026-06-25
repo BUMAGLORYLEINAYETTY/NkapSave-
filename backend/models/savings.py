@@ -15,7 +15,7 @@ class SavingsGoal(Base):
     emoji        = Column(String(10), default="🎯")
     target       = Column(Float, nullable=False)
     current      = Column(Float, default=0.0)
-    is_locked    = Column(Boolean, default=True)
+    is_locked    = Column(Boolean, default=False)
     is_completed = Column(Boolean, default=False)
     note         = Column(Text, nullable=True)
     deadline     = Column(DateTime(timezone=True), nullable=True)
