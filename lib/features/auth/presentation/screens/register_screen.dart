@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -55,16 +56,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
         city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
       );
       if (mounted) {
-        context.go('/email-pending', extra: email);
+        context.go('/login');
       }
     } catch (e) {
       setState(() {
         _loading = false;
-        final msg = e.toString();
-        if (msg.contains('email')) {
-          _error = 'An account with this email already exists';
-        } else if (msg.contains('phone')) {
-          _error = 'An account with this phone already exists';
+        String detail = '';
+        if (e is DioException) {
+          final data = e.response?.data;
+          if (data is Map) detail = data['detail']?.toString() ?? '';
+        }
+        if (detail.isEmpty) detail = e.toString();
+        if (detail.contains('email')) {
+          _error = 'An account with this email already exists. Check your inbox for a verification link.';
+        } else if (detail.contains('phone')) {
+          _error = 'An account with this phone number already exists.';
         } else {
           _error = 'Registration failed. Please try again.';
         }
@@ -384,11 +390,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       opacity: 0.5,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.lock_rounded, size: 14, color: AppColors.text3),
           const SizedBox(width: 6),
-          Text('END-TO-END ENCRYPTED',
-              style: AppTextStyles.caption.copyWith(letterSpacing: 1.5)),
+          Flexible(
+            child: Text(
+              'END-TO-END ENCRYPTED',
+              style: AppTextStyles.caption.copyWith(letterSpacing: 1.5),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     ),
