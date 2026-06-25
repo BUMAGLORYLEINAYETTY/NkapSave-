@@ -180,30 +180,15 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         password_hash=hash_password(body.password),
         date_of_birth=body.date_of_birth,
         city=body.city,
-        email_verified=False,
+        email_verified=True,   # auto-verify until custom domain is set up for email
         email_verify_token=token,
     )
     db.add(user)
     await db.flush()
     await db.refresh(user)
 
-    # Fire verification email without blocking the response. asyncio.create_task
-    # schedules it on the running event loop immediately and the HTTP response
-    # is returned to the client before the SMTP handshake begins.
-    async def _send_quietly() -> None:
-        try:
-            await _send_verification_email(email, token)
-            logger.info("Verification email sent to %s", email)
-        except Exception as exc:
-            logger.error("Verification email FAILED for %s: %s", email, exc)
-
-    asyncio.create_task(_send_quietly())
-
     return RegisterResponse(
-        message=(
-            "Account created! We've sent a verification link to your email. "
-            "Please check your inbox (and spam folder) to activate your account."
-        ),
+        message="Account created! You can now log in.",
         email=email,
     )
 
