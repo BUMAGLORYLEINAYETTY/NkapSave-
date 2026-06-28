@@ -6,7 +6,10 @@ function raises FCMNotConfigured — we never silently pretend a push went out.
 """
 from __future__ import annotations
 
+import base64
+import json
 import logging
+import tempfile
 import threading
 from pathlib import Path
 from typing import Iterable, List, Optional
@@ -31,6 +34,45 @@ _init_lock = threading.Lock()
 _app: Optional[firebase_admin.App] = None
 
 
+_tmp_cred_file: Optional[str] = None  # holds temp file path for Railway env-var path
+
+
+def _resolve_cred_path() -> str:
+    """Return a filesystem path to the service-account JSON.
+
+    Priority:
+      1. FCM_CREDENTIALS_JSON (base64) — written to a temp file once.
+      2. FCM_CREDENTIALS_PATH          — used directly if the file exists.
+    """
+    global _tmp_cred_file
+
+    if settings.FCM_CREDENTIALS_JSON:
+        if _tmp_cred_file and Path(_tmp_cred_file).exists():
+            return _tmp_cred_file
+        try:
+            raw = base64.b64decode(settings.FCM_CREDENTIALS_JSON)
+            json.loads(raw)  # validate it's real JSON before writing
+        except Exception as e:
+            raise FCMNotConfigured(f"FCM_CREDENTIALS_JSON is not valid base64 JSON: {e}")
+        tmp = tempfile.NamedTemporaryFile(
+            mode="wb", suffix=".json", delete=False, prefix="fcm_cred_"
+        )
+        tmp.write(raw)
+        tmp.close()
+        _tmp_cred_file = tmp.name
+        logger.info("FCM credentials written to temp file %s", _tmp_cred_file)
+        return _tmp_cred_file
+
+    if not settings.FCM_CREDENTIALS_PATH:
+        raise FCMNotConfigured(
+            "Set FCM_CREDENTIALS_JSON (base64) or FCM_CREDENTIALS_PATH in env"
+        )
+    cred_path = Path(settings.FCM_CREDENTIALS_PATH)
+    if not cred_path.exists():
+        raise FCMNotConfigured(f"FCM credentials file not found: {cred_path}")
+    return str(cred_path)
+
+
 def _ensure_app() -> firebase_admin.App:
     global _app
     if _app is not None:
@@ -38,15 +80,11 @@ def _ensure_app() -> firebase_admin.App:
     with _init_lock:
         if _app is not None:
             return _app
-        if not settings.FCM_CREDENTIALS_PATH:
-            raise FCMNotConfigured("FCM_CREDENTIALS_PATH is not set in .env")
-        cred_path = Path(settings.FCM_CREDENTIALS_PATH)
-        if not cred_path.exists():
-            raise FCMNotConfigured(f"FCM credentials file not found: {cred_path}")
-        cred = credentials.Certificate(str(cred_path))
+        cred_path = _resolve_cred_path()
+        cred = credentials.Certificate(cred_path)
         opts = {"projectId": settings.FCM_PROJECT_ID} if settings.FCM_PROJECT_ID else None
         _app = firebase_admin.initialize_app(cred, opts, name="nkapsave-fcm")
-        logger.info("Firebase Admin initialised")
+        logger.info("Firebase Admin initialised from %s", cred_path)
         return _app
 
 

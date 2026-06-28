@@ -52,8 +52,11 @@ class Settings(BaseSettings):
     TWILIO_WHATSAPP_FROM: Optional[str] = None     # e.g. whatsapp:+14155238886
 
     # ── Push notifications (Firebase Cloud Messaging) ────────
-    # Path to a service-account JSON file (server-side credential).
+    # Option A: path to a service-account JSON file (local / Docker volume).
     FCM_CREDENTIALS_PATH: Optional[str] = None
+    # Option B: base64-encoded service-account JSON (recommended for Railway).
+    # Generate: base64 -i firebase-service-account.json | tr -d '\n'
+    FCM_CREDENTIALS_JSON: Optional[str] = None
     FCM_PROJECT_ID: Optional[str] = None
 
     # ── Email (SMTP — monthly statements & on-demand reports) ─
